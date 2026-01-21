@@ -1,0 +1,24 @@
+[Unit]
+Description=BlueSpace Restaurant Hardware Notifier
+After=network.target graphical.target
+Wants=network.target
+Requires=graphical.target
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+WorkingDirectory=/home/pi/BlueSpace_Restaurants
+Environment=PYTHONPATH=/home/pi/BlueSpace_Restaurants
+Environment=SIMULATION_MODE=false
+Environment=SERVER_URL=https://bluespace-restaurants.onrender.com
+Environment=RESTAURANT_ID=2
+ExecStartPre=/bin/bash -c 'sleep 15'
+ExecStart=/home/pi/BlueSpace_Restaurants/start_hardware_notifier.sh
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=graphical.target

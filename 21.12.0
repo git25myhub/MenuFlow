@@ -1,0 +1,7 @@
+Requirement already satisfied: gevent in c:\users\user\onedrive\desktop\bluespace restaurants\venv\lib\site-packages (25.5.1)
+Requirement already satisfied: greenlet>=3.2.2 in c:\users\user\onedrive\desktop\bluespace restaurants\venv\lib\site-packages (from gevent) (3.2.3)
+Requirement already satisfied: cffi>=1.17.1 in c:\users\user\onedrive\desktop\bluespace restaurants\venv\lib\site-packages (from gevent) (1.17.1)
+Requirement already satisfied: zope.event in c:\users\user\onedrive\desktop\bluespace restaurants\venv\lib\site-packages (from gevent) (5.1)
+Requirement already satisfied: zope.interface in c:\users\user\onedrive\desktop\bluespace restaurants\venv\lib\site-packages (from gevent) (7.2)
+Requirement already satisfied: pycparser in c:\users\user\onedrive\desktop\bluespace restaurants\venv\lib\site-packages (from cffi>=1.17.1->gevent) (2.22)
+Requirement already satisfied: setuptools in c:\users\user\onedrive\desktop\bluespace restaurants\venv\lib\site-packages (from zope.event->gevent) (80.9.0)

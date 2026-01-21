@@ -1,0 +1,69 @@
+# Raspberry Pi Hardware Requirements
+# Install these packages on your Raspberry Pi for real hardware notifications
+
+# Core Flask and Extensions
+Flask==2.3.3
+Flask-Login==0.6.2
+Flask-SQLAlchemy==2.5.1
+Flask-Migrate==4.0.4
+Flask-WTF==1.1.1
+Flask-CORS==4.0.0
+Flask-Mail==0.9.1
+flask-socketio
+
+# Database
+SQLAlchemy==1.4.50
+psycopg2-binary==2.9.10
+alembic==1.12.1
+sqlalchemy-utils>=0.38.0,<0.42.0
+
+# Production Tools
+gunicorn==20.1.0
+prometheus-client==0.19.0
+
+# Real-time Features
+python-socketio>=5.12.0,<6.0.0
+python-engineio>=4.11.0,<5.0.0
+websocket-client
+gevent-websocket
+
+# File Processing
+Pillow==11.2.1
+fpdf2==2.7.5
+
+# Utilities
+python-decouple==3.8
+python-dotenv==1.0.0
+qrcode==7.4.2
+requests==2.31.0
+pytz==2023.3
+
+# Security
+cryptography==41.0.7
+pyjwt==2.8.0
+
+# Package Management
+setuptools<81
+
+# API and External Services
+httpx==0.25.2
+cloudinary==1.38.0
+
+# Hardware Dependencies (Raspberry Pi specific)
+Werkzeug==2.3.7
+email_validator==2.2.0
+gevent>=21.12.0
+
+# GPIO Library for Raspberry Pi
+RPi.GPIO>=0.7.0
+
+# Display and Graphics (for kitchen display system)
+pygame>=2.5.0
+Pillow>=10.0.0
+
+# Optional: For advanced PWM control
+pigpio>=1.78
+
+# Additional Hardware Support
+pyserial>=3.5  # For serial communication
+smbus2>=0.4.0  # For I2C communication 

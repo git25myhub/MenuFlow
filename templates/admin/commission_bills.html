@@ -1,0 +1,383 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Commission Bills - Admin{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="mb-0">
+                    <i class="fas fa-file-invoice text-primary"></i>
+                    Commission Bills Management
+                </h2>
+                <a href="{{ url_for('generate_commission_bills_all') }}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-magic"></i>
+                    Generate Last Month for All
+                </a>
+            </div>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="mb-3">
+                {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} mb-2">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <h6 class="mb-2">Generate Bills By Month</h6>
+                            <form class="form-inline" method="get" action="{{ url_for('generate_commission_bill_range') }}">
+                                <div class="form-group mr-2 mb-2">
+                                    <label class="mr-2 small">Year</label>
+                                    <input type="number" class="form-control form-control-sm" name="year" min="2000" max="2100" value="{{ (now.year if now else 2025) }}" required>
+                                </div>
+                                <div class="form-group mr-2 mb-2">
+                                    <label class="mr-2 small">Month</label>
+                                    <input type="number" class="form-control form-control-sm" name="month" min="1" max="12" value="{{ (now.month if now else 1) }}" required>
+                                </div>
+                                <div class="form-group mr-2 mb-2">
+                                    <label class="mr-2 small">Restaurant ID (optional)</label>
+                                    <input type="number" class="form-control form-control-sm" name="restaurant_id" min="1" placeholder="All if blank">
+                                </div>
+                                <button type="submit" class="btn btn-sm btn-primary mb-2">Generate</button>
+                            </form>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6 class="mb-2">Generate Bill For Restaurant</h6>
+                            <form class="form-inline" method="get" action="{{ url_for('generate_commission_bill_by_id') }}">
+                                <div class="form-group mr-2 mb-2">
+                                    <label class="mr-2 small">Restaurant ID</label>
+                                    <input type="number" class="form-control form-control-sm" name="restaurant_id" min="1" required>
+                                </div>
+                                <div class="form-group mr-2 mb-2">
+                                    <label class="mr-2 small">Year (optional)</label>
+                                    <input type="number" class="form-control form-control-sm" name="year" min="2000" max="2100">
+                                </div>
+                                <div class="form-group mr-2 mb-2">
+                                    <label class="mr-2 small">Month (optional)</label>
+                                    <input type="number" class="form-control form-control-sm" name="month" min="1" max="12">
+                                </div>
+                                <button type="submit" class="btn btn-sm btn-secondary mb-2">Generate</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="genRange" class="collapse mb-3">
+                <div class="card card-body p-3">
+                    <form class="form-inline" method="get" action="{{ url_for('generate_commission_bill_range') }}">
+                        <div class="form-group mr-2 mb-2">
+                            <label class="mr-2 small">Year</label>
+                            <input type="number" class="form-control form-control-sm" name="year" min="2000" max="2100" value="{{ (now.year if now else 2025) }}">
+                        </div>
+                        <div class="form-group mr-2 mb-2">
+                            <label class="mr-2 small">Month</label>
+                            <input type="number" class="form-control form-control-sm" name="month" min="1" max="12" value="{{ (now.month if now else 1) }}">
+                        </div>
+                        <div class="form-group mr-2 mb-2">
+                            <label class="mr-2 small">Restaurant ID (optional)</label>
+                            <input type="number" class="form-control form-control-sm" name="restaurant_id" min="1" placeholder="All if blank">
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-primary mb-2">Generate</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Bills -->
+    {% if pending_bills %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock"></i>
+                        Pending Commission Bills
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Restaurant</th>
+                                    <th>Period</th>
+                                    <th>Orders</th>
+                                    <th>Amount</th>
+                                    <th>Due Date</th>
+                                    <th>Status</th>
+                                    <th>Received</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for bill in pending_bills %}
+                                <tr>
+                                    <td>{{ bill.restaurant.restaurant_name }}</td>
+                                    <td>{{ bill.period_start.strftime('%B %Y') }}</td>
+                                    <td>{{ bill.orders_count }}</td>
+                                    <td class="font-weight-bold">KES {{ "%.2f"|format(bill.total_commission) }}</td>
+                                    <td>
+                                        {% if bill.due_date < now %}
+                                        <span class="text-danger font-weight-bold">{{ bill.due_date.strftime('%d/%m/%Y') }}</span>
+                                        {% else %}
+                                        {{ bill.due_date.strftime('%d/%m/%Y') }}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if bill.due_date < now %}
+                                        <span class="badge badge-danger">Overdue</span>
+                                        {% else %}
+                                        <span class="badge badge-warning">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        KES {{ "%.2f"|format(bill.amount_received or 0) }} / {{ "%.2f"|format(bill.total_commission) }}
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-primary" 
+                                                data-toggle="modal" data-target="#confirmPaymentModal{{ bill.id }}">
+                                            <i class="fas fa-check"></i>
+                                            Confirm Payment
+                                        </button>
+                                        <a href="{{ url_for('view_commission_bill', bill_id=bill.id) }}" 
+                                           class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i>
+                                            View Details
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Overdue Bills -->
+    {% if overdue_bills %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Overdue Commission Bills
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Restaurant</th>
+                                    <th>Period</th>
+                                    <th>Orders</th>
+                                    <th>Amount</th>
+                                    <th>Due Date</th>
+                                    <th>Days Overdue</th>
+                                    <th>Actions</th>
+                                    <th>Received</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for bill in overdue_bills %}
+                                <tr>
+                                    <td>{{ bill.restaurant.restaurant_name }}</td>
+                                    <td>{{ bill.period_start.strftime('%B %Y') }}</td>
+                                    <td>{{ bill.orders_count }}</td>
+                                    <td class="font-weight-bold text-danger">KES {{ "%.2f"|format(bill.total_commission) }}</td>
+                                    <td class="text-danger font-weight-bold">{{ bill.due_date.strftime('%d/%m/%Y') }}</td>
+                                    <td>
+                                        <span class="badge badge-danger">
+                                            {{ ((now - bill.due_date).days) }} days
+                                        </span>
+                                    </td>
+                                    <td>
+                                        KES {{ "%.2f"|format(bill.amount_received or 0) }} / {{ "%.2f"|format(bill.total_commission) }}
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-primary" 
+                                                data-toggle="modal" data-target="#confirmPaymentModal{{ bill.id }}">
+                                            <i class="fas fa-check"></i>
+                                            Confirm Payment
+                                        </button>
+                                        <a href="{{ url_for('view_commission_bill', bill_id=bill.id) }}" 
+                                           class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i>
+                                            View Details
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Recent Paid Bills -->
+    {% if paid_bills %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-check-circle"></i>
+                        Recent Paid Commission Bills
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Restaurant</th>
+                                    <th>Period</th>
+                                    <th>Orders</th>
+                                    <th>Amount</th>
+                                    <th>Paid Date</th>
+                                    <th>Reference</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for bill in paid_bills %}
+                                <tr>
+                                    <td>{{ bill.restaurant.restaurant_name }}</td>
+                                    <td>{{ bill.period_start.strftime('%B %Y') }}</td>
+                                    <td>{{ bill.orders_count }}</td>
+                                    <td class="font-weight-bold text-success">KES {{ "%.2f"|format(bill.total_commission) }}</td>
+                                    <td>{{ bill.paid_date.strftime('%d/%m/%Y %H:%M') }}</td>
+                                    <td>
+                                        {% if bill.payment_reference %}
+                                        <code>{{ bill.payment_reference }}</code>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('view_commission_bill', bill_id=bill.id) }}" 
+                                           class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i>
+                                            View Details
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- No Bills Message -->
+    {% if not pending_bills and not overdue_bills and not paid_bills %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-file-invoice fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No Commission Bills Available</h5>
+                    <p class="text-muted">Commission bills will appear here once they are generated. Use the button above to generate bills for last month.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Payment Confirmation Modals -->
+{% for bill in pending_bills + overdue_bills %}
+<div class="modal fade" id="confirmPaymentModal{{ bill.id }}" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Commission Payment</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form method="POST" action="{{ url_for('confirm_commission_payment', bill_id=bill.id) }}">
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <strong>Restaurant:</strong> {{ bill.restaurant.restaurant_name }}<br>
+                        <strong>Period:</strong> {{ bill.period_start.strftime('%B %Y') }}<br>
+                        <strong>Amount Due:</strong> KES {{ "%.2f"|format(bill.total_commission) }}
+                    </div>
+                    <div class="form-group">
+                        <label for="payment_reference{{ bill.id }}">Payment Reference</label>
+                        <input type="text" class="form-control" id="payment_reference{{ bill.id }}" 
+                               name="payment_reference" required 
+                               placeholder="e.g., REST{{ bill.restaurant_id }}_{{ bill.period_start.strftime('%Y_%m') }}">
+                        <small class="form-text text-muted">Enter the payment reference from M-Pesa confirmation</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="amount_received{{ bill.id }}">Amount Received (KES)</label>
+                        <input type="number" class="form-control" id="amount_received{{ bill.id }}" 
+                               name="amount_received" step="0.01" min="0" 
+                               value="{{ "%.2f"|format(bill.total_commission) }}" required>
+                        <small class="form-text text-muted">Enter the actual amount received</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-check"></i>
+                        Confirm Payment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<style>
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.alert {
+    border-radius: 0.25rem;
+}
+</style>
+{% endblock %} 

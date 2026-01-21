@@ -1,0 +1,129 @@
+{% extends 'admin_panel_base.html' %}
+{% block admin_panel_content %}
+<div class="container mt-4">
+    <h2>M-Pesa Integration Settings</h2>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Daraja API Credentials</h5>
+            <p class="card-text text-muted">
+                Enter your M-Pesa Daraja API credentials below. These credentials are required to process payments through M-Pesa.
+            </p>
+
+            <form method="POST" action="{{ url_for('daraja_settings') }}">
+                {{ form.hidden_tag() }}
+                
+                <div class="mb-3">
+                    {{ form.consumer_key.label(class="form-label") }}
+                    {{ form.consumer_key(class="form-control") }}
+                    {% if form.consumer_key.errors %}
+                        {% for error in form.consumer_key.errors %}
+                            <div class="text-danger">{{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.consumer_secret.label(class="form-label") }}
+                    {{ form.consumer_secret(class="form-control") }}
+                    {% if form.consumer_secret.errors %}
+                        {% for error in form.consumer_secret.errors %}
+                            <div class="text-danger">{{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.shortcode.label(class="form-label") }}
+                    {{ form.shortcode(class="form-control") }}
+                    {% if form.shortcode.errors %}
+                        {% for error in form.shortcode.errors %}
+                            <div class="text-danger">{{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.passkey.label(class="form-label") }}
+                    {{ form.passkey(class="form-control") }}
+                    {% if form.passkey.errors %}
+                        {% for error in form.passkey.errors %}
+                            <div class="text-danger">{{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.environment.label(class="form-label") }}
+                    {{ form.environment(class="form-select") }}
+                    {% if form.environment.errors %}
+                        {% for error in form.environment.errors %}
+                            <div class="text-danger">{{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                <div class="d-flex gap-2">
+                    {{ form.submit(class="btn btn-primary") }}
+                    <button type="button" class="btn btn-secondary" onclick="testCredentials()">Test Credentials</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-body">
+            <h5 class="card-title">How to Get Your Credentials</h5>
+            <ol>
+                <li>Go to <a href="https://developer.safaricom.co.ke/" target="_blank">Safaricom Developer Portal</a></li>
+                <li>Create an account or log in</li>
+                <li>Create a new app or use an existing one</li>
+                <li>Get your Consumer Key and Secret from the app details</li>
+                <li>For the Shortcode, use your M-Pesa Paybill or Till number</li>
+                <li>The Passkey is provided by Safaricom when you register for M-Pesa integration</li>
+            </ol>
+            <p class="text-muted">
+                <strong>Note:</strong> Make sure to test your credentials in Sandbox mode first before switching to Production.
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+function testCredentials() {
+    // Add AJAX call to test credentials endpoint
+    fetch('/test-daraja-credentials', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            consumer_key: document.getElementById('consumer_key').value,
+            consumer_secret: document.getElementById('consumer_secret').value,
+            shortcode: document.getElementById('shortcode').value,
+            passkey: document.getElementById('passkey').value,
+            environment: document.getElementById('environment').value
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Credentials are valid!');
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Error testing credentials: ' + error);
+    });
+}
+</script>
+{% endblock %} 

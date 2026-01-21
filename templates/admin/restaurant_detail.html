@@ -1,0 +1,109 @@
+{% extends "admin/admin_base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>{{ restaurant.restaurant_name }}</h1>
+            <p class="text-muted">ID: {{ restaurant.id }}</p>
+        </div>
+        <div class="col-auto">
+            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+        </div>
+    </div>
+
+    <!-- Restaurant Information -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="mb-0">Restaurant Information</h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Email:</strong> {{ restaurant.email }}</p>
+                    <p><strong>Contact Phone:</strong> {{ restaurant.contact_phone or 'N/A' }}</p>
+                    <p><strong>Address:</strong> {{ restaurant.restaurant_address or 'N/A' }}</p>
+                    <p><strong>Website:</strong> {{ restaurant.website or 'N/A' }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Currency:</strong> {{ restaurant.currency }}</p>
+                    <p><strong>Language:</strong> {{ restaurant.language }}</p>
+                    <p><strong>Timezone:</strong> {{ restaurant.timezone }}</p>
+                    <p><strong>Opening Hours:</strong> {{ restaurant.opening_hours or 'N/A' }}</p>
+                </div>
+            </div>
+            {% if restaurant.restaurant_description %}
+            <div class="mt-3">
+                <h5>Description</h5>
+                <p>{{ restaurant.restaurant_description }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Menu Items -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="mb-0">Menu Items</h3>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Price</th>
+                            <th>Stock</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in restaurant.menu_items %}
+                        <tr>
+                            <td>{{ item.name }}</td>
+                            <td>{{ item.price }}</td>
+                            <td>{{ item.stock }}</td>
+                            <td>{{ item.description or 'N/A' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Orders -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="mb-0">Recent Orders</h3>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Date</th>
+                            <th>Total Amount</th>
+                            <th>Status</th>
+                            <th>Type</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set sorted_orders = restaurant.orders|sort(attribute='created_at', reverse=True) %}
+                        {% for order in sorted_orders[:10] %}
+                        <tr>
+                            <td>{{ order.id }}</td>
+                            <td>{{ order.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                            <td>{{ order.total_amount }}</td>
+                            <td>{{ order.status }}</td>
+                            <td>{{ order.order_type }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

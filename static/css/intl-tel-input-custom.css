@@ -1,0 +1,43 @@
+/* Phone input styles - Attempting to fix conflicts */
+.iti {
+    width: 100%;
+    position: relative; /* Ensure the wrapper is relatively positioned */
+    display: inline-block;
+}
+
+.iti input[type="tel"] {
+    /* Adjust padding as intl-tel-input adds its own */
+    padding-left: 52px; /* Adjust this value based on the width of the flag container */
+    width: 100%; /* Ensure input takes full width of the iti wrapper */
+    box-sizing: content-box; /* Important for Bootstrap compatibility */
+    height: calc(1.5em + .75rem + 2px); /* Match Bootstrap form-control height */
+}
+
+.iti__flag-container {
+    z-index: 4;
+    position: absolute; /* Position the flag container absolutely within the wrapper */
+    top: 0;
+    bottom: 0;
+    left: 0;
+}
+
+/* Ensure country list dropdown has proper z-index */
+.iti__country-list {
+    z-index: 1050; /* Bootstrap modal z-index or higher */
+}
+
+/* Add rule for the dropdown itself if needed, though flag-container should trigger it */
+.iti__dropdown-content {
+    z-index: 1050; /* Match country-list z-index */
+}
+
+/* Fix for flag background size issues in some browsers */
+.iti__flag {
+    background-image: url("{{ url_for('static', filename='css/flags.png') }}"); /* Ensure correct path to flags image */
+}
+
+@media (-webkit-min-device-pixel-ratio: 2), (hover: none) {
+    .iti__flag {
+        background-image: url("{{ url_for('static', filename='css/flags@2x.png') }}"); /* High-res flags */
+    }
+} 

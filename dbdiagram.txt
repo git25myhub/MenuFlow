@@ -1,0 +1,29 @@
+// QR Code Menu System Database Schema
+
+Table User {
+  id integer [pk, increment]
+  email varchar [not null, unique]
+  password varchar [not null]
+  restaurant_name varchar [not null]
+  logo_filename varchar
+  qr_filename varchar
+}
+
+Table MenuItem {
+  id integer [pk, increment]
+  name varchar [not null]
+  description text
+  price float [not null]
+  image_filename varchar
+  user_id integer [ref: > User.id, not null]
+}
+
+Table Order {
+  id integer [pk, increment]
+  table_number varchar [not null]
+  items text [not null]
+  special_instructions text
+  user_id integer [ref: > User.id, not null]
+  created_at datetime [default: `CURRENT_TIMESTAMP`]
+  status varchar [default: 'pending']
+} 

@@ -1,0 +1,318 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Commission Reports - Admin{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <i class="fas fa-chart-bar text-primary"></i>
+                Commission Reports
+            </h2>
+        </div>
+    </div>
+
+    <!-- Date Range Filter -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-filter"></i>
+                        Filter Reports
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="GET" class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="start_date">Start Date</label>
+                                <input type="date" class="form-control" id="start_date" name="start_date" 
+                                       value="{{ start_date.strftime('%Y-%m-%d') if start_date else '' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="end_date">End Date</label>
+                                <input type="date" class="form-control" id="end_date" name="end_date" 
+                                       value="{{ end_date.strftime('%Y-%m-%d') if end_date else '' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <div>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-search"></i>
+                                        Generate Report
+                                    </button>
+                                    <a href="{{ url_for('commission_reports') }}" class="btn btn-secondary">
+                                        <i class="fas fa-times"></i>
+                                        Clear
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Platform Summary -->
+    {% if platform_summary %}
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Commission</h6>
+                            <h3 class="mb-0">KES {{ "%.2f"|format(platform_summary.total_commission) }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-money-bill-wave fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Paid Commission</h6>
+                            <h3 class="mb-0">KES {{ "%.2f"|format(platform_summary.paid_commission) }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-check-circle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Pending Commission</h6>
+                            <h3 class="mb-0">KES {{ "%.2f"|format(platform_summary.pending_commission) }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Restaurants</h6>
+                            <h3 class="mb-0">{{ platform_summary.restaurant_count }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-store fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Restaurant Commission Breakdown -->
+    {% if restaurant_commissions %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list"></i>
+                        Restaurant Commission Breakdown
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Restaurant</th>
+                                    <th>Orders</th>
+                                    <th>Total Commission</th>
+                                    <th>Pending Commission</th>
+                                    <th>Paid Commission</th>
+                                    <th>Average per Order</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for restaurant_id, data in restaurant_commissions.items() %}
+                                <tr>
+                                    <td>{{ data.restaurant.restaurant_name }}</td>
+                                    <td>{{ data.summary.total_orders }}</td>
+                                    <td class="font-weight-bold">KES {{ "%.2f"|format(data.summary.total_commission) }}</td>
+                                    <td class="text-warning">KES {{ "%.2f"|format(data.summary.pending_commission) }}</td>
+                                    <td class="text-success">KES {{ "%.2f"|format(data.summary.paid_commission) }}</td>
+                                    <td class="text-muted">KES {{ "%.2f"|format(data.summary.average_commission_per_order) }}</td>
+                                    <td>
+                                        <a href="{{ url_for('generate_commission_bill', restaurant_id=restaurant_id) }}" 
+                                           class="btn btn-sm btn-primary">
+                                            <i class="fas fa-file-invoice"></i>
+                                            Generate Bill
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr class="table-info">
+                                    <td><strong>Total</strong></td>
+                                    <td><strong>{{ platform_summary.total_orders if platform_summary else 0 }}</strong></td>
+                                    <td class="font-weight-bold">KES {{ "%.2f"|format(platform_summary.total_commission) if platform_summary else 0 }}</td>
+                                    <td class="font-weight-bold text-warning">KES {{ "%.2f"|format(platform_summary.pending_commission) if platform_summary else 0 }}</td>
+                                    <td class="font-weight-bold text-success">KES {{ "%.2f"|format(platform_summary.paid_commission) if platform_summary else 0 }}</td>
+                                    <td class="font-weight-bold text-muted">KES {{ "%.2f"|format(platform_summary.average_commission_per_restaurant) if platform_summary else 0 }}</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Commission Analytics -->
+    {% if platform_summary %}
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie"></i>
+                        Commission Distribution
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="border-right">
+                                <h4 class="text-success">{{ "%.1f"|format((platform_summary.paid_commission / platform_summary.total_commission) * 100) if platform_summary.total_commission > 0 else 0 }}%</h4>
+                                <p class="text-muted">Paid</p>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-warning">{{ "%.1f"|format((platform_summary.pending_commission / platform_summary.total_commission) * 100) if platform_summary.total_commission > 0 else 0 }}%</h4>
+                            <p class="text-muted">Pending</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line"></i>
+                        Performance Metrics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="border-right">
+                                <h4>{{ platform_summary.restaurant_count }}</h4>
+                                <p class="text-muted">Active Restaurants</p>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <h4>KES {{ "%.2f"|format(platform_summary.average_commission_per_restaurant) }}</h4>
+                            <p class="text-muted">Avg per Restaurant</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- No Data Message -->
+    {% if not platform_summary and not restaurant_commissions %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No Commission Data Available</h5>
+                    <p class="text-muted">Select a date range to generate commission reports.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.table-info {
+    background-color: #d1ecf1;
+}
+
+.border-right {
+    border-right: 1px solid #dee2e6;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set default date range if not provided
+    const startDate = document.getElementById('start_date');
+    const endDate = document.getElementById('end_date');
+    
+    if (!startDate.value) {
+        const today = new Date();
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        startDate.value = firstDay.toISOString().split('T')[0];
+    }
+    
+    if (!endDate.value) {
+        const today = new Date();
+        endDate.value = today.toISOString().split('T')[0];
+    }
+});
+</script>
+{% endblock %} 

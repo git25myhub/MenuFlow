@@ -1,0 +1,29 @@
+[Unit]
+Description=BlueSpace Restaurants - Hardware Notifier (Kitchen Display)
+After=network-online.target graphical.target
+Wants=network-online.target graphical.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/pi/BlueSpace_Restaurants
+Environment=PYTHONUNBUFFERED=1
+Environment=SERVER_URL=https://bluespace-restaurants.onrender.com
+Environment=RESTAURANT_ID=2
+Environment=SIMULATION_MODE=false
+Environment=SIO_DEBUG=0
+# Required for pygame display under systemd (X11)
+Environment=DISPLAY=:0
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+# Optional: force SDL video driver; comment out if using Wayland
+Environment=SDL_VIDEODRIVER=x11
+# Use the project's venv Python
+ExecStart=/home/pi/BlueSpace_Restaurants/venv/bin/python /home/pi/BlueSpace_Restaurants/run_hardware_notifier.py
+Restart=always
+RestartSec=3
+User=pi
+Group=pi
+
+[Install]
+WantedBy=multi-user.target
+
+

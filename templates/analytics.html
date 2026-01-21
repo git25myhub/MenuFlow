@@ -1,0 +1,210 @@
+{% extends 'admin_panel_base.html' %}
+{% block admin_panel_content %}
+<!-- Loading Spinner -->
+<div id="spinnerOverlay" class="spinner-overlay">
+    <div class="spinner-content">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2 text-primary">Loading analytics...</p>
+    </div>
+</div>
+
+<div class="container-fluid px-4 py-5">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="display-5 fw-bold mb-2">📊 Analytics Dashboard</h1>
+            <p class="text-muted">Track your restaurant's performance and sales metrics</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('export_report', format='csv') }}" class="btn btn-outline-primary">
+                <i class="fas fa-file-csv me-2"></i>Export CSV
+            </a>
+            <a href="{{ url_for('export_report', format='pdf') }}" class="btn btn-outline-primary">
+                <i class="fas fa-file-pdf me-2"></i>Export PDF
+            </a>
+        </div>
+    </div>
+
+    <!-- Time Range Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary" onclick="loadAnalytics('monthly')">
+                        <i class="fas fa-calendar-alt me-2"></i>Monthly
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" onclick="loadAnalytics('weekly')">
+                        <i class="fas fa-calendar-week me-2"></i>Last 7 Days
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" onclick="loadAnalytics('daily')">
+                        <i class="fas fa-chart-line me-2"></i>Daily
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" onclick="loadAnalytics('hourly')">
+                        <i class="fas fa-clock me-2"></i>Hourly
+                    </button>
+                </div>
+                <form id="rangeForm" class="d-flex align-items-center gap-2">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                        <input type="text" name="daterange" id="daterange" class="form-control" placeholder="Select date range">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Apply</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytics Content -->
+    <div id="analyticsContent">
+        {% if not has_data %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            No delivered orders yet — charts will appear once data is available.
+        </div>
+        {% endif %}
+        {% include 'partials/analytics_charts.html' %}
+    </div>
+
+    <!-- Back Button -->
+    <div class="mt-4">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<style>
+/* Spinner Overlay */
+.spinner-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    z-index: 1050;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(5px);
+}
+
+.spinner-content {
+    text-align: center;
+    background: white;
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* Card Styling */
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border-radius: 0.5rem;
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+/* Chart Container */
+.chart-container {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    margin-bottom: 1.5rem;
+}
+
+/* Button Styling */
+.btn-group .btn {
+    border-radius: 0.25rem !important;
+    margin: 0 0.25rem;
+}
+
+.btn-group .btn:first-child {
+    margin-left: 0;
+}
+
+.btn-group .btn:last-child {
+    margin-right: 0;
+}
+
+/* Active Button State */
+.btn-outline-primary.active {
+    background-color: #0d6efd;
+    color: white;
+}
+
+/* Date Range Input */
+#daterange {
+    min-width: 200px;
+}
+
+/* Chart Titles */
+.chart-container h3 {
+    color: #2c3e50;
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.chart-container p.text-muted {
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .container-fluid {
+        padding: 1rem;
+    }
+    
+    .btn-group {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+    
+    .btn-group .btn {
+        flex: 1;
+    }
+    
+    #rangeForm {
+        width: 100%;
+    }
+    
+    .input-group {
+        flex: 1;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.1/dist/chartjs-adapter-moment.min.js"></script>
+<script>
+  // Pass data from Flask to JavaScript
+  window.monthlySales = {{ monthly_sales | tojson | safe }};
+  window.itemStats = {{ item_stats | tojson | safe }};
+  const userCurrency = '{{ current_user.currency }}';
+
+  $(function() {
+    $('#daterange').daterangepicker({
+      opens: 'left',
+      autoApply: true,
+      locale: {
+        format: 'YYYY-MM-DD'
+      }
+    });
+  });
+</script>
+<script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
+{% endblock %}

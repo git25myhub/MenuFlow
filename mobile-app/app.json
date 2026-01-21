@@ -1,0 +1,57 @@
+{
+  "expo": {
+    "name": "BlueSpace Restaurants",
+    "slug": "bluespace-restaurants",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#e67e22"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bluespace.restaurants"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#e67e22"
+      },
+      "package": "com.bluespace.restaurants",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "READ_MEDIA_IMAGES"
+      ]
+    },
+    "plugins": [
+      "expo-camera",
+      "expo-image-picker",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 34,
+            "minSdkVersion": 24
+          }
+        }
+      ],
+      "expo-font"
+    ],
+    "extra": {
+      "apiUrl": "https://bluespace-restaurants.onrender.com/api/v1",
+      "eas": {
+        "projectId": "ce03cd0a-558a-4a75-9819-44520578317c"
+      }
+    },
+    "updates": {
+      "enabled": false,
+      "fallbackToCacheTimeout": 0
+    }
+  }
+}

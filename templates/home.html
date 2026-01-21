@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BlueSpace Restaurants - Digital Menu Solutions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#1e3a8a', // BlueSpace blue
+              secondary: '#0f172a', // BlueSpace dark blue
+              accent: '#3b82f6', // BlueSpace light blue
+              muted: '#9ca3af', // gray-400
+              bluespace: {
+                blue: '#1e3a8a',
+                light: '#3b82f6',
+                silver: '#c0c0c0',
+                dark: '#0f172a'
+              }
+            },
+            fontFamily: {
+              sans: ['Segoe UI', 'Tahoma', 'Geneva', 'Verdana', 'sans-serif'],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+      }
+      .animate-float {
+        animation: float 3s ease-in-out infinite;
+      }
+      .animate-scale-in {
+        animation: scaleIn 0.4s ease-out forwards;
+      }
+      @keyframes scaleIn {
+        from { transform: scale(0.95); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+      }
+      .animate-fade-in {
+        animation: fadeInUp 0.6s ease-out forwards;
+      }
+        @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .delay-1000 {
+        animation-delay: 1s;
+      }
+      .delay-2000 {
+        animation-delay: 2s;
+        }
+    </style>
+  </head>
+  <body class="bg-white text-gray-900 font-sans">
+    <!-- Hero Section (React-style conversion) -->
+    <section class="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <!-- Background Image with Overlay -->
+      <div 
+        class="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style="background-image: url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1600');"
+      >
+        <div class="absolute inset-0 bg-gradient-to-br from-black/70 via-black/50 to-black/70"></div>
+      </div>
+
+      <!-- Floating Icons -->
+      <div class="absolute top-20 left-10 opacity-20 animate-float">
+        <i class="fas fa-qrcode text-primary text-6xl"></i>
+      </div>
+      <div class="absolute bottom-32 right-16 opacity-20 animate-float delay-1000">
+        <i class="fas fa-mobile-alt text-yellow-400 text-5xl"></i>
+      </div>
+      <div class="absolute top-1/2 right-8 opacity-20 animate-float delay-2000">
+        <i class="fas fa-users text-accent text-4xl"></i>
+      </div>
+
+      <!-- Hero Content -->
+      <div class="relative z-10 container mx-auto px-4 text-center text-white">
+        <div class="max-w-4xl mx-auto animate-fade-in">
+          <!-- BlueSpace Logo -->
+          <div class="mb-8 flex justify-center">
+            <img src="{{ url_for('static', filename='img/logo-full.png') }}" alt="BlueSpace Restaurants" class="h-32 w-auto opacity-95">
+          </div>
+          <h1 class="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 bg-gradient-to-r from-white via-blue-300 to-blue-400 bg-clip-text text-transparent leading-tight">
+            BlueSpace Restaurants
+          </h1>
+          <p class="text-xl md:text-2xl lg:text-3xl mb-8 text-white/90 max-w-3xl mx-auto leading-relaxed">
+            Transform your restaurant's dining experience with our elegant digital menu solution
+          </p>
+          <div class="flex flex-col sm:flex-row gap-6 justify-center items-center animate-scale-in">
+            <a href="/register" class="w-full sm:w-auto min-w-[200px] px-6 py-3 bg-bluespace-light text-white font-bold rounded-full flex items-center justify-center gap-2 shadow hover:bg-blue-600 transition">
+              <i class="fas fa-qrcode"></i> Register Your Restaurant
+            </a>
+            <a href="/login" class="w-full sm:w-auto min-w-[150px] px-6 py-3 border border-white text-white font-semibold rounded-full flex items-center justify-center gap-2 hover:bg-white hover:text-black transition">
+              <i class="fas fa-users"></i> Login
+            </a>
+            <a href="{{ url_for('list_restaurants') }}" class="w-full sm:w-auto min-w-[180px] px-6 py-3 border border-white text-white font-semibold rounded-full flex items-center justify-center gap-2 hover:bg-white hover:text-black transition">
+              <i class="fas fa-mobile-alt"></i> View Restaurants
+                    </a>
+                </div>
+            </div>
+        </div>
+
+      <!-- Scroll Indicator -->
+      <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+        <div class="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center">
+          <div class="w-1 h-3 bg-white/60 rounded-full mt-2 animate-pulse"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-24 bg-gradient-to-b from-white to-blue-50">
+      <div class="max-w-7xl mx-auto px-6">
+        <h2 class="text-3xl font-bold text-center mb-16">Why Choose BlueSpace Restaurants?</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div class="bg-white rounded-xl shadow-lg p-8 text-center border border-gray-100 hover:-translate-y-2 transition">
+            <div class="text-4xl text-primary mb-4">
+              <i class="fas fa-qrcode"></i>
+                    </div>
+            <h3 class="text-xl font-semibold mb-2">QR Code Menus</h3>
+            <p class="text-muted">Create beautiful digital menus accessible through QR codes. No more printing costs or menu updates.</p>
+                </div>
+          <div class="bg-white rounded-xl shadow-lg p-8 text-center border border-gray-100 hover:-translate-y-2 transition">
+            <div class="text-4xl text-primary mb-4">
+              <i class="fas fa-mobile-alt"></i>
+                    </div>
+            <h3 class="text-xl font-semibold mb-2">Mobile-Friendly</h3>
+            <p class="text-muted">Your menu looks great on any device. Customers can easily browse and order from their smartphones.</p>
+                </div>
+          <div class="bg-white rounded-xl shadow-lg p-8 text-center border border-gray-100 hover:-translate-y-2 transition">
+            <div class="text-4xl text-primary mb-4">
+              <i class="fas fa-chart-line"></i>
+                    </div>
+            <h3 class="text-xl font-semibold mb-2">Order Management</h3>
+            <p class="text-muted">Track orders in real-time, manage your menu items, and get insights into your restaurant's performance.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="py-24 bg-white">
+      <div class="max-w-7xl mx-auto px-6">
+        <h2 class="text-3xl font-bold text-center mb-16">What Our Restaurants Say</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div class="bg-gray-50 rounded-xl p-8 shadow text-center">
+            <img src="https://ui-avatars.com/api/?name=John+Smith&background=0D8ABC&color=fff" class="w-20 h-20 rounded-full mx-auto mb-4" />
+            <p class="italic text-muted mb-4">"BlueSpace Restaurants has revolutionized how we serve our customers. The QR code system is easy to use and our customers love it!"</p>
+            <p class="font-semibold">- John Smith, Restaurant Owner</p>
+                    </div>
+          <div class="bg-gray-50 rounded-xl p-8 shadow text-center">
+            <img src="https://ui-avatars.com/api/?name=Sarah+Johnson&background=6C63FF&color=fff" class="w-20 h-20 rounded-full mx-auto mb-4" />
+            <p class="italic text-muted mb-4">"The order management system is fantastic. We can track orders in real-time and our staff is more efficient than ever."</p>
+            <p class="font-semibold">- Sarah Johnson, Cafe Manager</p>
+                </div>
+          <div class="bg-gray-50 rounded-xl p-8 shadow text-center">
+            <img src="https://ui-avatars.com/api/?name=Michael+Brown&background=FFB400&color=fff" class="w-20 h-20 rounded-full mx-auto mb-4" />
+            <p class="italic text-muted mb-4">"Setting up our digital menu was a breeze. The customer support team was incredibly helpful throughout the process."</p>
+            <p class="font-semibold">- Michael Brown, Chef</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-secondary text-white py-12 mt-12">
+      <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between">
+        <div>
+          <div class="flex items-center mb-2">
+            <img src="{{ url_for('static', filename='img/logo-full.png') }}" alt="BlueSpace Restaurants" class="h-12 w-auto mr-3">
+            <h3 class="text-xl font-bold text-primary">BlueSpace Restaurants</h3>
+          </div>
+          <p>Making restaurant management easier, one QR code at a time.</p>
+        </div>
+        <div class="flex gap-6 mt-6 md:mt-0">
+          <a href="#" class="hover:text-primary text-2xl"><i class="fab fa-facebook"></i></a>
+          <a href="#" class="hover:text-primary text-2xl"><i class="fab fa-twitter"></i></a>
+          <a href="#" class="hover:text-primary text-2xl"><i class="fab fa-instagram"></i></a>
+          <a href="#" class="hover:text-primary text-2xl"><i class="fab fa-linkedin"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+  </body>
+</html>

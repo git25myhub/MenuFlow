@@ -1,0 +1,287 @@
+{% extends 'admin_panel_base.html' %}
+{% block admin_panel_content %}
+<div class="container-fluid px-4 py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="display-5 fw-bold">
+                    <i class="fas fa-cog me-2"></i>Settings
+                </h1>
+                <button type="submit" form="settingsForm" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>Save Changes
+                </button>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form id="settingsForm" method="POST" action="{{ url_for('settings') }}" class="needs-validation" novalidate>
+                {{ form.hidden_tag() }}
+
+                <!-- Payment Settings -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-money-bill-wave me-2"></i>Payment Settings
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="payment_method" class="form-label">Preferred Payment Method</label>
+                                {{ form.payment_method(class="form-select", id="payment_method") }}
+                                <div class="form-text">Choose how customers will pay for their orders.</div>
+                                {% if form.payment_method.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.payment_method.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Manual Payment Details -->
+                        <div id="manualPaymentDetails" class="mt-3">
+                            <h6 class="mb-3">Manual Payment Details</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="mpesa_receiving_method" class="form-label">Mpesa Receiving Method</label>
+                                    {{ form.mpesa_receiving_method(class="form-select") }}
+                                    <div class="form-text">Select how you want to receive payments.</div>
+                                    {% if form.mpesa_receiving_method.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.mpesa_receiving_method.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Paybill Number -->
+                            <div id="paybillDetails" class="row d-none">
+                                <div class="col-md-6">
+                                    <label for="mpesa_paybill" class="form-label">Mpesa Paybill Number</label>
+                                    {{ form.mpesa_paybill(class="form-control", placeholder="Enter your Paybill number") }}
+                                    <div class="form-text">Your Mpesa Paybill number (5-7 digits).</div>
+                                    {% if form.mpesa_paybill.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.mpesa_paybill.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Till Number -->
+                            <div id="tillDetails" class="row d-none">
+                                <div class="col-md-6">
+                                    <label for="mpesa_till" class="form-label">Mpesa Till Number</label>
+                                    {{ form.mpesa_till(class="form-control", placeholder="Enter your Till number") }}
+                                    <div class="form-text">Your Mpesa Till number (5-7 digits).</div>
+                                    {% if form.mpesa_till.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.mpesa_till.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Phone Number -->
+                            <div id="phoneDetails" class="row d-none">
+                                <div class="col-md-6">
+                                    <label for="mpesa_phone_receiver" class="form-label">Mpesa Phone Number</label>
+                                    <input type="tel" name="mpesa_phone_receiver" id="mpesa_phone_receiver" class="form-control intl-phone-input" placeholder="Enter your Mpesa phone number" value="{{ form.mpesa_phone_receiver.data or '' }}">
+                                    <div class="form-text">Your Mpesa phone number for receiving payments.</div>
+                                    {% if form.mpesa_phone_receiver.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.mpesa_phone_receiver.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Display Settings -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-palette me-2"></i>Display Settings
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="theme_color" class="form-label">Theme Color</label>
+                                <div class="input-group">
+                                    {{ form.theme_color(class="form-control", type="color", value=form.theme_color.data or '#000000') }}
+                                    <span class="input-group-text">
+                                        <i class="fas fa-eye-dropper"></i>
+                                    </span>
+                                </div>
+                                {% if form.theme_color.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.theme_color.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="menu_layout" class="form-label">Menu Layout</label>
+                                {{ form.menu_layout(class="form-select") }}
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    {{ form.show_prices(class="form-check-input") }}
+                                    <label class="form-check-label" for="show_prices">Show Prices</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    {{ form.show_descriptions(class="form-check-input") }}
+                                    <label class="form-check-label" for="show_descriptions">Show Descriptions</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="language" class="form-label">Language</label>
+                                {{ form.language(class="form-select") }}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="timezone" class="form-label">Timezone</label>
+                                {{ form.timezone(class="form-select") }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account Settings -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">
+                            <i class="fas fa-user-shield me-2"></i>Account Settings
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="current_password" class="form-label">Current Password</label>
+                                {{ form.current_password(class="form-control") }}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="new_password" class="form-label">New Password</label>
+                                {{ form.new_password(class="form-control") }}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="confirm_password" class="form-label">Confirm New Password</label>
+                                {{ form.confirm_password(class="form-control") }}
+                            </div>
+                        </div>
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Leave password fields empty if you don't want to change your password.
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Add intl-tel-input JS from CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/18.1.1/js/intlTelInput.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/18.1.1/js/utils.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize all phone inputs with the intl-phone-input class
+    document.querySelectorAll('.intl-phone-input').forEach(function(input) {
+        const iti = window.intlTelInput(input, {
+            initialCountry: "auto",
+            separateDialCode: true,
+            utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/18.1.1/js/utils.js",
+            geoIpLookup: function(callback) {
+                fetch("https://ipapi.co/json")
+                    .then(res => res.json())
+                    .then(data => callback(data.country_code))
+                    .catch(() => callback("us"));
+            }
+        });
+
+        // Add form submission handler for this specific input
+        const form = input.closest('form');
+        if (form) {
+            form.addEventListener('submit', function() {
+                input.value = iti.getNumber();
+            });
+        }
+    });
+
+    // Show/hide Mpesa details based on payment method and receiving method
+    function updatePaymentVisibility() {
+        var paymentMethod = document.getElementById('payment_method');
+        var manualDetails = document.getElementById('manualPaymentDetails');
+        if (!paymentMethod || !manualDetails) return;
+
+        if (paymentMethod.value === 'manual') {
+            manualDetails.style.display = '';
+        } else {
+            manualDetails.style.display = 'none';
+        }
+        updateMpesaDetails();
+    }
+
+    function updateMpesaDetails() {
+        var method = document.getElementById('mpesa_receiving_method');
+        if (!method) return;
+        var paybill = document.getElementById('paybillDetails');
+        var till = document.getElementById('tillDetails');
+        var phone = document.getElementById('phoneDetails');
+
+        // Hide all by default
+        paybill.classList.add('d-none');
+        till.classList.add('d-none');
+        phone.classList.add('d-none');
+
+        // Show the relevant one
+        if (method.value === 'paybill') {
+            paybill.classList.remove('d-none');
+        } else if (method.value === 'till') {
+            till.classList.remove('d-none');
+        } else if (method.value === 'phone') {
+            phone.classList.remove('d-none');
+        }
+    }
+
+    var paymentMethod = document.getElementById('payment_method');
+    if (paymentMethod) {
+        paymentMethod.addEventListener('change', updatePaymentVisibility);
+        updatePaymentVisibility(); // Run on page load
+    }
+
+    var mpesaMethod = document.getElementById('mpesa_receiving_method');
+    if (mpesaMethod) {
+        mpesaMethod.addEventListener('change', updateMpesaDetails);
+        updateMpesaDetails(); // Run on page load
+    }
+});
+</script>
+{% endblock %} 

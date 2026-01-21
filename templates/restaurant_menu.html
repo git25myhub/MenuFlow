@@ -1,0 +1,2180 @@
+{% extends "restaurant_menu_layout.html" %}
+
+{% block content %}
+
+
+{% block error_modal %}
+<div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="errorModalLabel">
+                    <i class="fas fa-exclamation-triangle text-danger me-2"></i>Error
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Error message will be inserted here by JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+<!-- Hero Section -->
+<div class="header-image text-white text-center {% if user.logo_url %}has-logo{% endif %}">
+    <div class="header-overlay">
+        {% if user.logo_url %}
+        <img src="{{ user.logo_url }}" 
+             alt="{{ user.restaurant_name }} Logo" 
+             class="restaurant-logo">
+        {% endif %}
+        <h1 class="display-4 mb-4 welcome-heading"><i class="fas fa-utensils me-3"></i>Welcome to {{ user.restaurant_name }}</h1>
+        <p class="welcome-subtitle">✨ We are delighted to serve you today! ✨</p>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="container px-3 px-md-5">
+    <!-- Category Navigation -->
+    <div class="category-nav-container">
+        <div class="category-nav-wrapper">
+            <button class="category-nav-arrow category-nav-arrow-left" aria-label="Scroll left">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="category-nav" id="categoryNav">
+                <a href="{{ url_for('restaurant_menu', user_id=user.id) }}" class="category-btn {% if not selected_category_id %}active{% endif %}">
+                    <span class="category-icon">🍽️</span>
+                    <span class="category-text">All</span>
+                </a>
+                {% for category in categories %}
+                    <a href="{{ url_for('restaurant_menu', user_id=user.id, category=category.id) }}" class="category-btn {% if selected_category_id == category.id %}active{% endif %}">
+                        <span class="category-icon">
+                            {% if category.name.lower() in ['starters', 'appetizers'] %}🥗
+                            {% elif category.name.lower() in ['main course', 'mains'] %}🍖
+                            {% elif category.name.lower() in ['desserts', 'sweets'] %}🍰
+                            {% elif category.name.lower() in ['beverages', 'drinks'] %}🥤
+                            {% elif category.name.lower() in ['hot drinks', 'coffee', 'tea'] %}☕
+                            {% elif category.name.lower() in ['sides', 'side dishes'] %}🥔
+                            {% elif category.name.lower() in ['breakfast'] %}🍳
+                            {% elif category.name.lower() in ['burgers', 'sandwiches'] %}🍔
+                            {% elif category.name.lower() in ['pizza'] %}🍕
+                            {% else %}🍽️{% endif %}
+                        </span>
+                        <span class="category-text">{{ category.name }}</span>
+                    </a>
+                {% endfor %}
+            </div>
+            <button class="category-nav-arrow category-nav-arrow-right" aria-label="Scroll right">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+        <div class="category-scroll-indicator">
+            <div class="scroll-progress" id="scrollProgress"></div>
+        </div>
+    </div>
+
+    <!-- Category Title and Description -->
+    <div class="category-header text-center mb-4">
+        {% if selected_category_id %}
+            {% set selected_category = categories|selectattr('id', 'equalto', selected_category_id)|first %}
+            <h2 class="mb-2">{{ selected_category.name }}</h2>
+            {% if selected_category.description %}
+                <p class="text-muted">{{ selected_category.description }}</p>
+            {% endif %}
+        {% else %}
+            <h2 class="mb-2">All Menu Items</h2>
+            <p class="text-muted">Browse all available food, drinks, and snacks.</p>
+        {% endif %}
+    </div>
+    <!-- Menu Items Grid -->
+    <div class="menu-items-grid">
+        {% for item in menu_items %}
+        <div class="menu-item-card">
+            {% if item.image_url %}
+            <div class="menu-item-image">
+                <img src="{{ item.image_url }}" 
+                     alt="{{ item.name }}"
+                     loading="lazy">
+                {% if item.stock == 0 %}
+                <div class="sold-out-badge">Sold Out</div>
+                {% endif %}
+            </div>
+            {% endif %}
+            <div class="menu-item-content">
+                <h3 class="menu-item-title">{{ item.name }}</h3>
+                <p class="menu-item-description">{{ item.description }}</p>
+                <div class="menu-item-footer">
+                    <div class="price-tag">
+                        {{ item.price|format_price(user.currency) }}
+                    </div>
+                    <div class="stock-status {% if item.stock > 0 %}in-stock{% else %}out-of-stock{% endif %}">
+                        {% if item.stock > 0 %}
+                        <i class="fas fa-check-circle me-1"></i>In Stock
+                        {% else %}
+                        <i class="fas fa-times-circle me-1"></i>Out of Stock
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="menu-item-actions">
+                    <div class="form-check">
+                        <input class="form-check-input menu-item" 
+                               type="checkbox" 
+                               name="items" 
+                               value="{{ item.name }}" 
+                               id="item{{ item.id }}"
+                               data-id="{{ item.id }}"
+                               data-price="{{ item.price }}"
+                               data-name="{{ item.name }}"
+                               data-stock="{{ item.stock }}"
+                               {% if item.stock == 0 %}disabled{% endif %}>
+                        <label class="form-check-label" for="item{{ item.id }}">
+                            Select Item
+                        </label>
+                    </div>
+                    <div class="quantity-selector" style="display: none;">
+                        <label>Quantity:</label>
+                        <div class="quantity-controls">
+                            <button type="button" class="quantity-btn minus" onclick="decrementQuantity(this)">-</button>
+                            <input type="number" 
+                                   class="form-control quantity-input" 
+                                   value="1" 
+                                   min="1" 
+                                   max="{{ item.stock if item.stock > 0 else 1 }}"
+                                   onchange="validateQuantity(this)">
+                            <button type="button" class="quantity-btn plus" onclick="incrementQuantity(this)">+</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <!-- Floating Place Order Button -->
+    <button id="placeOrderBtn" class="btn btn-success place-order-btn" type="button" data-bs-toggle="modal" data-bs-target="#orderFormModal">
+        <i class="fas fa-shopping-cart me-2"></i>Place Order
+    </button>
+</div>
+<!-- Footer Contact Information -->
+<div class="footer-contact-info text-white text-center py-3">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                {% if user.contact_phone %}
+                <p class="mb-1"><i class="fas fa-phone me-2"></i>Contact: {{ user.contact_phone }}</p>
+                {% endif %}
+                {% if user.help_contact %}
+                <p class="mb-0"><i class="fas fa-headset me-2"></i>Need Help? Call: {{ user.help_contact }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Move all modals to the very end of the file, just before endblock -->
+
+<!-- Order Form Modal -->
+<div class="modal fade" id="orderFormModal" tabindex="-1" aria-labelledby="orderFormModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="orderFormModalLabel">
+                    <i class="fas fa-clipboard-list me-2"></i>Order Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" id="orderForm" action="{{ url_for('restaurant_menu', user_id=user.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" id="payment-method" value="{{ user.payment_method or 'manual' }}">
+    <input type="hidden" id="order_type" name="order_type" value="dine_in">
+                    
+                    {# Order Type Selection #}
+                    <div class="form-group mb-3">
+                        <label for="orderTypeSelect"><i class="fas fa-concierge-bell me-1"></i> Order Type</label>
+                        <select class="form-select" id="orderTypeSelect">
+                            <option value="dine_in" selected>Dine-In</option>
+                            <option value="delivery">Delivery</option>
+                        </select>
+                    </div>
+
+                    <div id="dineInFields">
+                        <div class="form-group mb-3">
+                            <label for="table_number">
+                                <i class="fas fa-chair me-1"></i>Table Number
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="table_number" 
+                                   name="table_number" 
+                                   required 
+                                   placeholder="Enter your table number">
+                        </div>
+                    </div>
+
+                    {# Delivery Fields (initially hidden) #}
+                    <div id="deliveryFields" style="display: none;">
+                        <div class="form-group mb-3">
+                            <label for="customer_name">
+                                <i class="fas fa-user me-1"></i>Your Name
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="customer_name" 
+                                   name="customer_name"
+                                   placeholder="Enter your name">
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="customer_phone">
+                                <i class="fas fa-phone me-1"></i>Phone Number
+                            </label>
+                            <input type="tel" 
+                                   class="form-control" 
+                                   id="customer_phone" 
+                                   name="customer_phone"
+                                   placeholder="Enter your phone number">
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="delivery_address">
+                                <i class="fas fa-map-marker-alt me-1"></i>Delivery Address
+                            </label>
+                            <textarea class="form-control" 
+                                     id="delivery_address" 
+                                     name="delivery_address" 
+                                     rows="3" 
+                                     placeholder="Enter delivery address"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="special_instructions">
+                            <i class="fas fa-comment-alt me-1"></i>Special Instructions
+                        </label>
+                        <textarea class="form-control" 
+                                 id="special_instructions" 
+                                 name="special_instructions" 
+                                 rows="3" 
+                                 placeholder="Any special requests or dietary requirements?"></textarea>
+                    </div>
+
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i>Cancel
+                        </button>
+                        <button type="button" 
+                                class="btn btn-primary" 
+                                onclick="showOrderConfirmation()">
+                            <i class="fas fa-shopping-cart me-1"></i>Review Order
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Order Confirmation Modal -->
+<div class="modal fade" id="orderConfirmationModal" tabindex="-1" aria-labelledby="orderConfirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="orderConfirmationModalLabel">
+                    <i class="fas fa-shopping-cart me-2"></i>Confirm Your Order
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="order-summary">
+                    <h6 class="mb-3">Selected Items:</h6>
+                    <div id="selectedItems" class="selected-items-list mb-3">
+                        <!-- Selected items will be listed here -->
+                    </div>
+                    <div class="order-total">
+                        <span class="total-label">Total Amount:</span>
+                        <span id="totalAmount" class="total-amount">0.00</span>
+                    </div>
+                    {# Order Details in Modal #}
+                    <div class="order-details mt-3">
+                         <div id="confirmDineInDetails">
+                            <div class="detail-item">
+                                <i class="fas fa-chair me-2"></i>
+                                <span>Table Number: </span>
+                                <span id="confirmTableNumber" class="fw-bold"></span>
+                            </div>
+                            <div class="detail-item mt-2">
+                                <i class="fas fa-comment-alt me-2"></i>
+                                <span>Special Instructions:</span>
+                                <p id="confirmSpecialInstructions" class="text-muted fst-italic mt-1"></p>
+                            </div>
+                         </div>
+                         <div id="confirmDeliveryDetails" style="display: none;">
+                             <div class="detail-item">
+                                 <i class="fas fa-user me-2"></i>
+                                 <span>Name: </span>
+                                 <span id="confirmCustomerName" class="fw-bold"></span>
+                             </div>
+                             <div class="detail-item mt-2">
+                                 <i class="fas fa-phone me-2"></i>
+                                 <span>Phone: </span>
+                                 <span id="confirmCustomerPhone" class="fw-bold"></span>
+                             </div>
+                             <div class="detail-item mt-2">
+                                 <i class="fas fa-map-marker-alt me-2"></i>
+                                 <span>Delivery Address: </span>
+                                 <p id="confirmDeliveryAddress" class="fw-bold mt-1"></p>
+                             </div>
+                             <div class="detail-item mt-2">
+                                <i class="fas fa-comment-alt me-2"></i>
+                                <span>Special Instructions:</span>
+                                <p id="confirmDeliveryInstructions" class="text-muted fst-italic mt-1"></p>
+                            </div>
+                         </div>
+                    </div>
+                </div>
+                <div id="stkPushPhoneField" class="mb-3" style="display: none;">
+                  <label for="stkPushPhoneInput" class="form-label"><i class="fas fa-phone me-1"></i>Mpesa Phone Number (required for STK Push)</label>
+                  <input type="tel" class="form-control" id="stkPushPhoneInput" placeholder="e.g. 07XXXXXXXX">
+                </div>
+                <div id="payment-status" style="margin-top: 1em; color: #e67e22;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="editOrderFromConfirmation()">
+                    <i class="fas fa-edit me-1"></i>Edit Order
+                </button>
+                <button type="button" class="btn btn-primary" onclick="handleOrderAndPayment()">
+                    <i class="fas fa-check me-1"></i>Confirm Order
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mpesa Payment Modal -->
+<div class="modal fade" id="mpesaPaymentModal" tabindex="-1" aria-labelledby="mpesaPaymentModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="mpesaPaymentModalLabel">
+          <i class="fas fa-mobile-alt me-2"></i>Mpesa Payment
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- STK Push Payment Form -->
+        <form id="mpesaPaymentForm" class="d-none">
+          <div class="mb-3">
+            <label for="mpesaPhoneNumber" class="form-label">Your Mpesa Phone Number</label>
+            <input type="tel" class="form-control" id="mpesaPhoneNumber" name="mpesaPhoneNumber" placeholder="e.g. 07XXXXXXXX" required>
+          </div>
+          <div class="text-end">
+            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-success">Pay & Complete Order</button>
+          </div>
+        </form>
+
+        <!-- Manual Payment Instructions -->
+        <div id="manualPaymentInstructions" class="d-none">
+          <div class="alert alert-info">
+            <h5 class="alert-heading">Manual Payment Instructions</h5>
+            <p>Please follow these steps to complete your payment:</p>
+            <ol>
+              <li>Open your M-Pesa menu on your phone</li>
+              <li id="manualPaymentStep"></li>
+              <li>Enter the amount: <strong id="manualPaymentAmount"></strong></li>
+              <li>Enter your M-Pesa PIN</li>
+              <li>Confirm the payment</li>
+            </ol>
+          </div>
+          <div class="text-center mt-3">
+            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-success" onclick="confirmManualPayment()">I've Made the Payment</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Payment Failure Modal -->
+<div class="modal fade" id="paymentFailureModal" tabindex="-1" aria-labelledby="paymentFailureModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="paymentFailureModalLabel">
+          <i class="fas fa-exclamation-triangle me-2 text-danger"></i>Order Not Completed
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <p class="mb-0">Payment failed or was cancelled. Your order was <strong>not</strong> completed.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const RESTAURANT_ID = {{ user.id }};
+// Global variable to store selected items and quantities
+let orderItemsData = [];
+
+// Currency formatting function
+function formatCurrency(amount, currency) {
+    const currencySymbols = {
+        'USD': '$',
+        'KES': 'KSh',
+        'EUR': '€',
+        'GBP': '£',
+        'INR': '₹',
+        'AUD': 'A$',
+        'CAD': 'C$',
+        'JPY': '¥'
+    };
+    const symbol = currencySymbols[currency] || '$';
+    return `${symbol}${amount.toFixed(2)}`;
+}
+
+// Quantity control functions
+function incrementQuantity(button) {
+    const input = button.parentElement.querySelector('.quantity-input');
+    const max = parseInt(input.getAttribute('max'));
+    const currentValue = parseInt(input.value);
+    if (currentValue < max) {
+        input.value = currentValue + 1;
+        validateQuantity(input);
+    }
+}
+
+function decrementQuantity(button) {
+    const input = button.parentElement.querySelector('.quantity-input');
+    const currentValue = parseInt(input.value);
+    if (currentValue > 1) {
+        input.value = currentValue - 1;
+        validateQuantity(input);
+    }
+}
+
+// Validate quantity input
+function validateQuantity(input) {
+    const min = parseInt(input.getAttribute('min'));
+    const max = parseInt(input.getAttribute('max'));
+    let value = parseInt(input.value);
+
+    if (isNaN(value) || value < min) {
+        value = min;
+    } else if (value > max) {
+        value = max;
+    }
+    input.value = value;
+
+    // Update order summary when quantity changes
+    updateOrderSummary();
+}
+
+// Throttle function for performance
+function throttle(func, limit) {
+    let inThrottle;
+    return function() {
+        const args = arguments;
+        const context = this;
+        if (!inThrottle) {
+            func.apply(context, args);
+            inThrottle = true;
+            setTimeout(() => inThrottle = false, limit);
+        }
+    };
+}
+
+// Modern Category Navigation Scroll Functionality
+function initCategoryScroll() {
+    const categoryNav = document.getElementById('categoryNav');
+    const leftArrow = document.querySelector('.category-nav-arrow-left');
+    const rightArrow = document.querySelector('.category-nav-arrow-right');
+    const scrollProgress = document.getElementById('scrollProgress');
+    
+    if (!categoryNav) return;
+
+    let isScrolling = false;
+    let scrollTimeout;
+    let isDragging = false;
+    let startX = 0;
+    let startScrollLeft = 0;
+    let dragVelocity = 0;
+    let lastDragTime = 0;
+
+    // Update arrow visibility with smooth transitions
+    function updateArrowVisibility() {
+        const { scrollLeft, scrollWidth, clientWidth } = categoryNav;
+        const tolerance = 5; // Small tolerance for better UX
+        
+        if (leftArrow) {
+            const shouldHide = scrollLeft <= tolerance;
+            leftArrow.classList.toggle('hidden', shouldHide);
+        }
+        
+        if (rightArrow) {
+            const shouldHide = scrollLeft >= scrollWidth - clientWidth - tolerance;
+            rightArrow.classList.toggle('hidden', shouldHide);
+        }
+    }
+
+    // Update scroll progress indicator with smooth animation
+    function updateScrollProgress() {
+        if (!scrollProgress) return;
+        
+        const { scrollLeft, scrollWidth, clientWidth } = categoryNav;
+        const maxScroll = scrollWidth - clientWidth;
+        const progress = maxScroll > 0 ? (scrollLeft / maxScroll) * 100 : 0;
+        
+        // Use requestAnimationFrame for smooth animation
+        requestAnimationFrame(() => {
+            scrollProgress.style.width = `${progress}%`;
+        });
+    }
+
+    // Enhanced smooth scroll with easing
+    function smoothScrollTo(targetScrollLeft, duration = 600) {
+        isScrolling = true;
+        const startScrollLeft = categoryNav.scrollLeft;
+        const distance = targetScrollLeft - startScrollLeft;
+        const startTime = performance.now();
+
+        function easeInOutCubic(t) {
+            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        function animate(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const easedProgress = easeInOutCubic(progress);
+            
+            categoryNav.scrollLeft = startScrollLeft + (distance * easedProgress);
+            
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            } else {
+                isScrolling = false;
+                updateArrowVisibility();
+                updateScrollProgress();
+            }
+        }
+
+        requestAnimationFrame(animate);
+    }
+
+    // Enhanced arrow click handlers with momentum
+    if (leftArrow) {
+        leftArrow.addEventListener('click', (e) => {
+            e.preventDefault();
+            const scrollAmount = Math.min(categoryNav.clientWidth * 0.7, 300);
+            const newScrollLeft = Math.max(0, categoryNav.scrollLeft - scrollAmount);
+            smoothScrollTo(newScrollLeft);
+        });
+    }
+
+    if (rightArrow) {
+        rightArrow.addEventListener('click', (e) => {
+            e.preventDefault();
+            const scrollAmount = Math.min(categoryNav.clientWidth * 0.7, 300);
+            const maxScroll = categoryNav.scrollWidth - categoryNav.clientWidth;
+            const newScrollLeft = Math.min(maxScroll, categoryNav.scrollLeft + scrollAmount);
+            smoothScrollTo(newScrollLeft);
+        });
+    }
+
+    // Enhanced touch/swipe support with momentum
+    categoryNav.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+        startScrollLeft = categoryNav.scrollLeft;
+        isDragging = true;
+        dragVelocity = 0;
+        lastDragTime = performance.now();
+        
+        // Add visual feedback
+        categoryNav.style.cursor = 'grabbing';
+    }, { passive: true });
+
+    categoryNav.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        e.preventDefault();
+        
+        const currentX = e.touches[0].clientX;
+        const currentTime = performance.now();
+        const diff = startX - currentX;
+        
+        // Calculate velocity for momentum
+        const timeDiff = currentTime - lastDragTime;
+        if (timeDiff > 0) {
+            dragVelocity = diff / timeDiff;
+        }
+        
+        categoryNav.scrollLeft = startScrollLeft + diff;
+        lastDragTime = currentTime;
+    }, { passive: false });
+
+    categoryNav.addEventListener('touchend', () => {
+        if (isDragging) {
+            // Apply momentum scrolling
+            const momentum = dragVelocity * 100;
+            const targetScroll = categoryNav.scrollLeft + momentum;
+            const maxScroll = categoryNav.scrollWidth - categoryNav.clientWidth;
+            const clampedTarget = Math.max(0, Math.min(maxScroll, targetScroll));
+            
+            smoothScrollTo(clampedTarget, 800);
+        }
+        
+        isDragging = false;
+        categoryNav.style.cursor = 'grab';
+    }, { passive: true });
+
+    // Enhanced mouse drag support
+    categoryNav.addEventListener('mousedown', (e) => {
+        if (e.target.closest('.category-btn')) return; // Don't drag if clicking on buttons
+        
+        startX = e.clientX;
+        startScrollLeft = categoryNav.scrollLeft;
+        isDragging = true;
+        categoryNav.style.cursor = 'grabbing';
+        categoryNav.style.userSelect = 'none';
+    });
+
+    categoryNav.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        e.preventDefault();
+        
+        const currentX = e.clientX;
+        const diff = startX - currentX;
+        categoryNav.scrollLeft = startScrollLeft + diff;
+    });
+
+    categoryNav.addEventListener('mouseup', () => {
+        isDragging = false;
+        categoryNav.style.cursor = 'grab';
+        categoryNav.style.userSelect = 'auto';
+    });
+
+    categoryNav.addEventListener('mouseleave', () => {
+        isDragging = false;
+        categoryNav.style.cursor = 'grab';
+        categoryNav.style.userSelect = 'auto';
+    });
+
+    // Throttled scroll event listener for better performance
+    const throttledScrollHandler = throttle(() => {
+        if (!isScrolling) {
+            updateArrowVisibility();
+            updateScrollProgress();
+        }
+    }, 16); // ~60fps
+
+    categoryNav.addEventListener('scroll', throttledScrollHandler);
+
+    // Enhanced keyboard navigation
+    categoryNav.addEventListener('keydown', (e) => {
+        const activeBtn = categoryNav.querySelector('.category-btn:focus');
+        if (!activeBtn) return;
+
+        const scrollAmount = 150;
+        
+        if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            smoothScrollTo(Math.max(0, categoryNav.scrollLeft - scrollAmount));
+        } else if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            const maxScroll = categoryNav.scrollWidth - categoryNav.clientWidth;
+            smoothScrollTo(Math.min(maxScroll, categoryNav.scrollLeft + scrollAmount));
+        } else if (e.key === 'Home') {
+            e.preventDefault();
+            smoothScrollTo(0);
+        } else if (e.key === 'End') {
+            e.preventDefault();
+            const maxScroll = categoryNav.scrollWidth - categoryNav.clientWidth;
+            smoothScrollTo(maxScroll);
+        }
+    });
+
+    // Auto-scroll to active category on load
+    function scrollToActiveCategory() {
+        const activeBtn = categoryNav.querySelector('.category-btn.active');
+        if (activeBtn) {
+            const containerRect = categoryNav.getBoundingClientRect();
+            const buttonRect = activeBtn.getBoundingClientRect();
+            const buttonCenter = buttonRect.left + buttonRect.width / 2;
+            const containerCenter = containerRect.left + containerRect.width / 2;
+            const offset = buttonCenter - containerCenter;
+            
+            if (Math.abs(offset) > 50) { // Only scroll if significantly off-center
+                smoothScrollTo(categoryNav.scrollLeft + offset, 800);
+            }
+        }
+    }
+
+    // Initialize on load
+    updateArrowVisibility();
+    updateScrollProgress();
+    
+    // Scroll to active category after a short delay
+    setTimeout(scrollToActiveCategory, 100);
+
+    // Handle window resize with debouncing
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            updateArrowVisibility();
+            updateScrollProgress();
+            scrollToActiveCategory();
+        }, 150);
+    });
+
+    // Add focus management for better accessibility
+    categoryNav.addEventListener('focusin', (e) => {
+        if (e.target.classList.contains('category-btn')) {
+            const buttonRect = e.target.getBoundingClientRect();
+            const containerRect = categoryNav.getBoundingClientRect();
+            
+            // Check if button is fully visible
+            if (buttonRect.left < containerRect.left || buttonRect.right > containerRect.right) {
+                const offset = buttonRect.left - containerRect.left + (buttonRect.width / 2) - (containerRect.width / 2);
+                smoothScrollTo(categoryNav.scrollLeft + offset, 400);
+            }
+        }
+    });
+}
+
+// Show/hide quantity selector based on checkbox
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM fully loaded and parsed'); // Log when DOM is ready
+    
+    // Initialize enhanced category scroll
+    initCategoryScroll();
+    
+    const menuItems = document.querySelectorAll('.menu-item');
+    menuItems.forEach(item => {
+        item.addEventListener('change', function() {
+            const quantitySelector = this.closest('.menu-item-actions').querySelector('.quantity-selector');
+            if (this.checked) {
+                quantitySelector.style.display = 'flex';
+                 // Ensure quantity input has the correct name and value
+                const quantityInput = quantitySelector.querySelector('.quantity-input');
+                quantityInput.setAttribute('name', 'quantities[]');
+                // Set initial quantity to 1 if checked
+                if (parseInt(quantityInput.value) < 1) {
+                    quantityInput.value = 1;
+                }
+                validateQuantity(quantityInput); // Validate initial quantity
+            } else {
+                quantitySelector.style.display = 'none';
+                 // Remove the name attribute so it's not submitted
+                quantitySelector.querySelector('.quantity-input').removeAttribute('name');
+                quantitySelector.querySelector('.quantity-input').value = 1; // Reset quantity
+            }
+        });
+    });
+
+    // Enhanced Category Navigation Scroll Functionality
+    const categoryNav = document.getElementById('categoryNav');
+    const leftArrow = document.querySelector('.category-nav-arrow-left');
+    const rightArrow = document.querySelector('.category-nav-arrow-right');
+    const scrollProgress = document.getElementById('scrollProgress');
+    
+    if (categoryNav) {
+        // Update arrow visibility and scroll progress
+        function updateScrollUI() {
+            const { scrollLeft, scrollWidth, clientWidth } = categoryNav;
+            
+            if (leftArrow) {
+                leftArrow.classList.toggle('hidden', scrollLeft <= 0);
+            }
+            if (rightArrow) {
+                rightArrow.classList.toggle('hidden', scrollLeft >= scrollWidth - clientWidth - 1);
+            }
+            if (scrollProgress) {
+                const maxScroll = scrollWidth - clientWidth;
+                const progress = maxScroll > 0 ? (scrollLeft / maxScroll) * 100 : 0;
+                scrollProgress.style.width = `${progress}%`;
+            }
+        }
+
+        // Arrow click handlers
+        if (leftArrow) {
+            leftArrow.addEventListener('click', () => {
+                const scrollAmount = categoryNav.clientWidth * 0.8;
+                categoryNav.scrollTo({
+                    left: Math.max(0, categoryNav.scrollLeft - scrollAmount),
+                    behavior: 'smooth'
+                });
+            });
+        }
+
+        if (rightArrow) {
+            rightArrow.addEventListener('click', () => {
+                const scrollAmount = categoryNav.clientWidth * 0.8;
+                const maxScroll = categoryNav.scrollWidth - categoryNav.clientWidth;
+                categoryNav.scrollTo({
+                    left: Math.min(maxScroll, categoryNav.scrollLeft + scrollAmount),
+                    behavior: 'smooth'
+                });
+            });
+        }
+
+        // Touch/swipe support
+        let startX = 0;
+        let startScrollLeft = 0;
+        let isDragging = false;
+
+        categoryNav.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            startScrollLeft = categoryNav.scrollLeft;
+            isDragging = true;
+        }, { passive: true });
+
+        categoryNav.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            const currentX = e.touches[0].clientX;
+            const diff = startX - currentX;
+            categoryNav.scrollLeft = startScrollLeft + diff;
+        }, { passive: false });
+
+        categoryNav.addEventListener('touchend', () => {
+            isDragging = false;
+        }, { passive: true });
+
+        // Scroll event listener
+        categoryNav.addEventListener('scroll', updateScrollUI);
+
+        // Initialize
+        updateScrollUI();
+    }
+
+    // Add event listener for order type select
+    const orderTypeSelect = document.getElementById('orderTypeSelect');
+    if (orderTypeSelect) { // Check if element exists
+        orderTypeSelect.addEventListener('change', function() {
+            const selectedOrderType = this.value;
+            document.getElementById('order_type').value = selectedOrderType; // Update hidden input
+
+            const dineInFields = document.getElementById('dineInFields');
+            const deliveryFields = document.getElementById('deliveryFields');
+
+            if (selectedOrderType === 'dine_in') {
+                if (dineInFields) dineInFields.style.display = 'block';
+                if (deliveryFields) deliveryFields.style.display = 'none';
+                // Make table number required for dine-in
+                const tableNumberInput = document.getElementById('table_number');
+                if (tableNumberInput) tableNumberInput.setAttribute('required', 'required');
+                const customerNameInput = document.getElementById('customer_name');
+                if (customerNameInput) customerNameInput.removeAttribute('required');
+                const customerPhoneInput = document.getElementById('customer_phone');
+                if (customerPhoneInput) customerPhoneInput.removeAttribute('required');
+                const deliveryAddressInput = document.getElementById('delivery_address');
+                if (deliveryAddressInput) deliveryAddressInput.removeAttribute('required');
+                // Clear delivery fields when switching to dine-in
+                if (customerNameInput) customerNameInput.value = '';
+                if (customerPhoneInput) customerPhoneInput.value = '';
+                if (deliveryAddressInput) deliveryAddressInput.value = '';
+
+            } else if (selectedOrderType === 'delivery') {
+                if (dineInFields) dineInFields.style.display = 'none';
+                if (deliveryFields) deliveryFields.style.display = 'block';
+                // Make delivery fields required for delivery
+                const customerNameInput = document.getElementById('customer_name');
+                if (customerNameInput) customerNameInput.setAttribute('required', 'required');
+                const customerPhoneInput = document.getElementById('customer_phone');
+                if (customerPhoneInput) customerPhoneInput.setAttribute('required', 'required');
+                const deliveryAddressInput = document.getElementById('delivery_address');
+                if (deliveryAddressInput) deliveryAddressInput.setAttribute('required', 'required');
+                const tableNumberInput = document.getElementById('table_number');
+                if (tableNumberInput) tableNumberInput.removeAttribute('required');
+                 // Clear table number when switching to delivery
+                if (tableNumberInput) tableNumberInput.value = '';
+            }
+        });
+    }
+
+    // Add event listener to the new button to show the form
+    const showFormBtn = document.getElementById('placeOrderBtn');
+    const orderFormModal = new bootstrap.Modal(document.getElementById('orderFormModal'));
+
+    if (showFormBtn) {
+        showFormBtn.addEventListener('click', function() {
+            // Check if any items are selected
+            const selectedItems = document.querySelectorAll('.menu-item:checked');
+            if (selectedItems.length === 0) {
+                alert('Please select at least one item before placing your order.');
+                return;
+            }
+            
+            // If items are selected, show the modal
+            orderFormModal.show();
+        });
+    }
+});
+
+// Function to update the order summary in the modal
+function updateOrderSummary() {
+    orderItemsData = []; // Clear previous data
+    let total = 0;
+    const selectedItemsListDiv = document.getElementById('selectedItems');
+    selectedItemsListDiv.innerHTML = ''; // Clear previous list
+
+    document.querySelectorAll('.menu-item:checked').forEach(checkbox => {
+        const itemId = parseInt(checkbox.dataset.id);
+        const itemName = checkbox.dataset.name;
+        const itemPrice = parseFloat(checkbox.dataset.price);
+        const quantityInput = checkbox.closest('.menu-item-actions').querySelector('.quantity-input');
+        const quantity = parseInt(quantityInput.value);
+
+        if (quantity > 0) {
+            orderItemsData.push({
+                item_id: itemId,
+                name: itemName,
+                quantity: quantity,
+                price: itemPrice
+            });
+            total += quantity * itemPrice;
+
+            const itemElement = document.createElement('p');
+            itemElement.textContent = `${itemName} (x${quantity}) - ${formatCurrency(quantity * itemPrice, '{{ user.currency }}')}`;
+            selectedItemsListDiv.appendChild(itemElement);
+        }
+    });
+
+    document.getElementById('totalAmount').textContent = formatCurrency(total, '{{ user.currency }}');
+
+    // Update confirmation modal based on order type
+    const selectedOrderType = document.getElementById('orderTypeSelect').value;
+    const confirmDineInDetails = document.getElementById('confirmDineInDetails');
+    const confirmDeliveryDetails = document.getElementById('confirmDeliveryDetails');
+
+    if (selectedOrderType === 'dine_in') {
+        confirmDineInDetails.style.display = 'block';
+        confirmDeliveryDetails.style.display = 'none';
+        document.getElementById('confirmTableNumber').textContent = document.getElementById('table_number').value;
+        document.getElementById('confirmSpecialInstructions').textContent = document.getElementById('special_instructions').value || 'None';
+    } else if (selectedOrderType === 'delivery') {
+        confirmDineInDetails.style.display = 'none';
+        confirmDeliveryDetails.style.display = 'block';
+        document.getElementById('confirmCustomerName').textContent = document.getElementById('customer_name').value;
+        document.getElementById('confirmCustomerPhone').textContent = document.getElementById('customer_phone').value;
+        document.getElementById('confirmDeliveryAddress').textContent = document.getElementById('delivery_address').value;
+        document.getElementById('confirmDeliveryInstructions').textContent = document.getElementById('special_instructions').value || 'None';
+    }
+}
+
+// Show the order confirmation modal and update summary
+function showOrderConfirmation() {
+    // Check if any items are selected first
+    if (orderItemsData.length === 0) {
+        alert('Please select at least one item to order.');
+        return;
+    }
+
+    // Then validate form fields based on order type
+    const selectedOrderType = document.getElementById('orderTypeSelect').value;
+    if (selectedOrderType === 'dine_in') {
+        if (!document.getElementById('table_number').value) {
+            alert('Please enter a table number.');
+            return;
+        }
+    } else if (selectedOrderType === 'delivery') {
+         if (!document.getElementById('customer_name').value || !document.getElementById('customer_phone').value || !document.getElementById('delivery_address').value) {
+            alert('Please fill in all delivery details.');
+            return;
+        }
+    }
+    // Show/hide phone field for STK Push
+    const paymentMethod = document.getElementById('payment-method') ? document.getElementById('payment-method').value : 'manual';
+    const stkPushPhoneField = document.getElementById('stkPushPhoneField');
+    if (paymentMethod === 'stk_push') {
+      stkPushPhoneField.style.display = 'block';
+    } else {
+      stkPushPhoneField.style.display = 'none';
+    }
+    // Hide the order form modal
+    const orderFormModal = bootstrap.Modal.getInstance(document.getElementById('orderFormModal'));
+    if (orderFormModal) {
+        orderFormModal.hide();
+    }
+
+    // If all validations pass, update the summary and show the modal
+    updateOrderSummary();
+    const orderConfirmationModal = new bootstrap.Modal(document.getElementById('orderConfirmationModal'));
+    orderConfirmationModal.show();
+}
+
+// Normalize phone number for Safaricom (remove +, convert 07... to 2547...)
+function normalizePhone(phone) {
+  phone = phone.trim();
+  if (phone.startsWith('+')) phone = phone.slice(1);
+  if (phone.startsWith('0')) phone = '254' + phone.slice(1);
+  return phone;
+}
+
+// --- Best Practice Order + Payment Flow ---
+
+// Helper: Collect selected items and quantities
+function getSelectedOrderData() {
+  const items = [];
+  document.querySelectorAll('.menu-item:checked').forEach(checkbox => {
+    const itemId = parseInt(checkbox.dataset.id);
+    const itemName = checkbox.dataset.name;
+    const itemPrice = parseFloat(checkbox.dataset.price);
+    const quantityInput = checkbox.closest('.menu-item-actions').querySelector('.quantity-input');
+    const quantity = parseInt(quantityInput.value);
+    items.push({ item_id: itemId, name: itemName, price: itemPrice, quantity: quantity });
+  });
+  return items;
+}
+
+// --- STK Push Payment Flow ---
+async function submitOrderWithSTKPush(orderData, phone) {
+  phone = normalizePhone(phone);
+  // 1. Initiate payment
+  const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+  const resp = await fetch('/initiate-payment', {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrfToken
+    },
+    body: JSON.stringify({ order_data: orderData, phone: phone })
+  });
+  const statusElem = document.getElementById('payment-status');
+  if (statusElem) statusElem.textContent = 'Waiting for payment confirmation...';
+  const data = await resp.json();
+  if (!data.success) {
+    if (statusElem) statusElem.textContent = '';
+    alert('Payment initiation failed: ' + (data.message || 'Unknown error'));
+    return;
+  }
+  const sessionToken = data.session_token;
+  // 3. Poll payment status
+  let paid = false;
+  for (let i = 0; i < 30; i++) {
+    await new Promise(r => setTimeout(r, 2000));
+    const pollResp = await fetch(`/payment-status?session=${sessionToken}`);
+    const pollData = await pollResp.json();
+    if (pollData.is_paid) {
+      paid = true;
+      break;
+    }
+  }
+  if (statusElem) statusElem.textContent = '';
+  if (paid) {
+    alert('Payment confirmed! Your order has been placed.');
+    window.location.reload();
+  } else {
+    alert('Payment not confirmed. Please try again or check your M-Pesa app.');
+  }
+}
+
+// Step 1: On confirm order, collect all order data and send to backend
+function handleOrderAndPayment() {
+  // Prevent multiple submissions
+  const confirmButton = document.querySelector('button[onclick="handleOrderAndPayment()"]');
+  if (confirmButton && confirmButton.disabled) {
+    console.log('Order submission already in progress...');
+    return;
+  }
+  
+  // Disable the button and show loading state
+  if (confirmButton) {
+    confirmButton.disabled = true;
+    const originalText = confirmButton.innerHTML;
+    confirmButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Processing...';
+    confirmButton.classList.add('btn-secondary');
+    confirmButton.classList.remove('btn-primary');
+    
+    // Store original state for restoration
+    confirmButton.dataset.originalText = originalText;
+  }
+  
+  // Collect order data
+  const items = getSelectedOrderData();
+  if (items.length === 0) {
+    alert('Please select at least one item.');
+    // Restore button state
+    if (confirmButton) {
+      confirmButton.disabled = false;
+      confirmButton.innerHTML = confirmButton.dataset.originalText;
+      confirmButton.classList.remove('btn-secondary');
+      confirmButton.classList.add('btn-primary');
+    }
+    return;
+  }
+  // Collect form fields
+  const orderType = document.getElementById('orderTypeSelect').value;
+  const tableNumber = document.getElementById('table_number').value;
+  const customerName = document.getElementById('customer_name') ? document.getElementById('customer_name').value : '';
+  const customerPhone = document.getElementById('customer_phone') ? document.getElementById('customer_phone').value : '';
+  const deliveryAddress = document.getElementById('delivery_address') ? document.getElementById('delivery_address').value : '';
+  const specialInstructions = document.getElementById('special_instructions').value;
+
+  // Calculate total
+  let total = 0;
+  items.forEach(item => { total += item.price * item.quantity; });
+
+  // Prepare payload
+  const orderPayload = {
+    items: items,
+    order_type: orderType,
+    table_number: tableNumber,
+    customer_name: customerName,
+    customer_phone: customerPhone,
+    delivery_address: deliveryAddress,
+    special_instructions: specialInstructions,
+    total_amount: total,
+    restaurant_id: RESTAURANT_ID,
+    // Add a unique submission ID to prevent duplicates
+    submission_id: Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+  };
+
+  // Check payment method
+  const paymentMethod = document.getElementById('payment-method') ? document.getElementById('payment-method').value : 'manual';
+  console.log('[DEBUG] Payment method detected:', paymentMethod);
+  if (paymentMethod === 'stk_push') {
+    // Get phone from the STK Push phone input
+    const stkPushPhone = document.getElementById('stkPushPhoneInput').value.trim();
+    if (!stkPushPhone) {
+      alert('Please enter your Mpesa phone number for STK Push payment.');
+      document.getElementById('stkPushPhoneInput').focus();
+      return;
+    }
+    console.log('[DEBUG] Using STK Push flow.');
+    submitOrderWithSTKPush(orderPayload, stkPushPhone);
+    return;
+  }
+  console.log('[DEBUG] Using manual payment flow.');
+  // --- Manual payment: direct order creation ---
+  const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+  console.log('CSRF Token:', csrfToken);
+  console.log('Order Payload:', orderPayload);
+  fetch(window.location.pathname, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrfToken
+    },
+    body: JSON.stringify(orderPayload)
+  })
+  .then(res => {
+    // Check if response is JSON
+    if (!res.ok) {
+      return res.text().then(text => {
+        // Try to parse as JSON first
+        try {
+          const error = JSON.parse(text);
+          return Promise.reject(error);
+        } catch (e) {
+          // If not JSON, return the text
+          return Promise.reject({ message: text });
+        }
+      });
+    }
+    return res.json();
+  })
+  .then(data => {
+    if (data.success && data.order_id) {
+      if (paymentMethod === 'manual') {
+        showManualPaymentModal(data.order_id, total, data.manual_payment_details);
+      } else {
+        window.location.href = '/order-success/' + data.order_id;
+      }
+    } else {
+      throw new Error(data.message || 'Failed to create order');
+    }
+  })
+  .catch(err => {
+    console.error('Order creation error:', err);
+    
+    // Handle different types of duplicate responses
+    if (err.message && (
+      err.message.includes('already been submitted') || 
+      err.message.includes('already submitted in this session') ||
+      err.message.includes('Too many orders submitted')
+    )) {
+      let errorMessage = err.message;
+      
+      // Customize message based on reason
+      if (err.reason === 'session_duplicate') {
+        errorMessage = 'This order has already been submitted in this session. Please check your order status.';
+      } else if (err.reason === 'rate_limit') {
+        errorMessage = 'Too many orders submitted. Please wait a moment before trying again.';
+      } else if (err.reason === 'database_duplicate') {
+        errorMessage = 'This order has already been submitted. Please check your order status.';
+      }
+      
+          // Use enhanced error display instead of alert
+    showEnhancedError(errorMessage, 'error');
+    // Close the confirmation modal
+    const orderConfirmationModal = bootstrap.Modal.getInstance(document.getElementById('orderConfirmationModal'));
+    if (orderConfirmationModal) {
+        orderConfirmationModal.hide();
+    }
+    return;
+    }
+    
+    // Show a more user-friendly error message for other errors
+    const errorMessage = err.message || 'An unexpected error occurred while processing your order.';
+    const errorModal = document.getElementById('errorModal');
+    const errorText = errorModal.querySelector('.modal-body');
+    errorText.textContent = errorMessage;
+    // Show the error modal
+    const errorModalInstance = new bootstrap.Modal(errorModal);
+    errorModalInstance.show();
+  })
+  .finally(() => {
+    // Restore button state in all cases
+    if (confirmButton) {
+      confirmButton.disabled = false;
+      confirmButton.innerHTML = confirmButton.dataset.originalText;
+      confirmButton.classList.remove('btn-secondary');
+      confirmButton.classList.add('btn-primary');
+    }
+  });
+}
+
+// Add this function to show the manual payment modal and handle confirmation
+function showManualPaymentModal(orderId, totalAmount, paymentDetails) {
+  // Hide all open modals before showing the payment modal
+  document.querySelectorAll('.modal.show').forEach(function(modalEl) {
+    var modalInstance = bootstrap.Modal.getInstance(modalEl);
+    if (modalInstance) {
+      modalInstance.hide();
+    }
+  });
+  document.querySelectorAll('.modal-backdrop').forEach(function(backdrop) {
+    backdrop.parentNode.removeChild(backdrop);
+  });
+  var mpesaModal = new bootstrap.Modal(document.getElementById('mpesaPaymentModal'));
+  mpesaModal.show();
+  document.getElementById('mpesaPaymentForm').classList.add('d-none');
+  document.getElementById('manualPaymentInstructions').classList.remove('d-none');
+  document.getElementById('manualPaymentAmount').textContent = totalAmount;
+  // Set payment details and instructions
+  let paymentStep = '';
+  if (paymentDetails) {
+    if (paymentDetails.type === 'phone') {
+      paymentStep = `Select \"Send Money\" and enter the number: <strong>${paymentDetails.number}</strong>`;
+    } else if (paymentDetails.type === 'paybill') {
+      paymentStep = `Select \"Pay Bill\" and enter the business number: <strong>${paymentDetails.number}</strong>`;
+    } else if (paymentDetails.type === 'till') {
+      paymentStep = `Select \"Buy Goods and Services\" and enter the till number: <strong>${paymentDetails.number}</strong>`;
+    }
+  } else {
+    paymentStep = 'Please use the payment details provided by the restaurant.';
+  }
+  document.getElementById('manualPaymentStep').innerHTML = paymentStep;
+  window.currentOrderId = orderId;
+}
+
+// Update confirmManualPayment to POST to /confirm-manual-payment/<order_id> and redirect
+function confirmManualPayment() {
+  if (!window.currentOrderId) {
+    alert('Error: Order ID not found');
+    return;
+  }
+  const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+  fetch('/confirm-manual-payment/' + window.currentOrderId, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrfToken
+    }
+  })
+  .then(() => {
+    window.location.href = '/order-success/' + window.currentOrderId;
+  });
+}
+
+function editOrderFromConfirmation() {
+    // Hide the confirmation modal
+    const orderConfirmationModal = bootstrap.Modal.getInstance(document.getElementById('orderConfirmationModal'));
+    if (orderConfirmationModal) orderConfirmationModal.hide();
+    // After a short delay (to allow backdrop to clear), show the order form modal
+    setTimeout(function() {
+        const orderFormModal = new bootstrap.Modal(document.getElementById('orderFormModal'));
+        orderFormModal.show();
+    }, 300);
+}
+
+// Enhanced error handling with visual feedback
+function showEnhancedError(message, type = 'error') {
+    // Create a toast notification
+    const toastContainer = document.getElementById('toast-container') || createToastContainer();
+    
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type === 'error' ? 'danger' : 'warning'} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-${type === 'error' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+                ${message}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    `;
+    
+    toastContainer.appendChild(toast);
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+        }
+    }, 5000);
+}
+
+function createToastContainer() {
+    const container = document.createElement('div');
+    container.id = 'toast-container';
+    container.className = 'toast-container position-fixed top-0 end-0 p-3';
+    container.style.zIndex = '9999';
+    document.body.appendChild(container);
+    return container;
+}
+
+</script>
+
+<style>
+/* Button to reveal order form */
+#showOrderFormBtnContainer {
+    position: fixed; /* Change to fixed positioning */
+    bottom: 20px; /* Adjust distance from the bottom as needed */
+    left: 50%;
+    transform: translateX(-50%); /* Center the container */
+    z-index: 1000; /* Ensure it's above other content */
+     width: auto; /* Allow the container to size based on button */
+}
+
+#showOrderFormBtn {
+    /* Remove sticky styles from the button itself */
+    position: static;
+    bottom: auto;
+    left: auto;
+    transform: none;
+    z-index: auto;
+    /* Keep existing button styles */
+    padding: 15px 30px; /* Adjust padding */
+    font-size: 1.2rem; /* Adjust font size */
+    border-radius: 30px; /* Rounded corners */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Add a shadow */
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+#showOrderFormBtn:hover {
+    /* Adjust hover effect for the button */
+    transform: translateY(-2px); /* Lift slightly on hover */
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3); /* Increase shadow on hover */
+}
+
+/* Order Form Section (initially hidden) */
+#orderFormSection {
+    display: none;
+}
+
+/* Colors */
+:root {
+    --primary: #e67e22;
+    --primary-dark: #d35400;
+    --success: #4bb71b;
+    --danger: #e74c3c;
+    --background: #f9f9f9;
+    --text: #333;
+    --text-light: #666;
+    --border: #ddd;
+    --shadow: rgba(0, 0, 0, 0.1);
+}
+
+/* Restaurant Logo */
+.restaurant-logo {
+    max-height: 150px;
+    max-width: 200px;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+/* Hero Section */
+.header-image {
+    min-height: 300px;
+    max-height: 450px;
+    background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
+                      url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8cmVzdGF1cmFudCUyMGludGVyaW9yfGVufDB8fDB8fHww');
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    margin-top: -2rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.header-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.8));
+    min-height: 100%;
+}
+
+.restaurant-logo {
+    max-width: 120px;
+    max-height: 80px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+    margin-bottom: 1rem;
+    transition: transform 0.3s ease;
+}
+
+.restaurant-logo:hover {
+    transform: scale(1.05);
+}
+
+.welcome-heading {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.welcome-subtitle {
+    font-size: 1.2rem;
+    margin-top: 0.5rem;
+    padding: 0 1rem;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Hero section height adaptation based on logo presence */
+.header-image.has-logo {
+    min-height: 350px;
+    max-height: 500px;
+}
+
+.header-image.has-logo .header-overlay {
+    padding: 1.5rem 2rem;
+}
+
+.header-image.has-logo .welcome-heading {
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-bottom: 0.25rem;
+}
+
+.header-image.has-logo .welcome-subtitle {
+    margin-top: 0.25rem;
+}
+
+/* Sticky Order Section - Removed Sticky Styles */
+.sticky-order-section {
+    background-color: #f8f9fa; /* Light background */
+    padding: 1.5rem 0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem; /* Space below the form */
+}
+
+.sticky-order-section .container {
+     /* Adjust padding as needed for non-sticky */
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+}
+
+.sticky-form-group {
+    background-color: white; /* White background for form groups */
+    padding: 1rem;
+    border-radius: 0.5rem; /* Rounded corners */
+    border: 1px solid var(--border); /* Add a border */
+    flex-grow: 1;
+    min-width: 250px; /* Adjust minimum width */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); /* Subtle shadow */
+}
+
+.sticky-form-group label {
+    color: var(--text-light); /* Label color */
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.sticky-form-group .form-control {
+    background-color: white; /* White input background */
+    border: 1px solid var(--border); /* Input border */
+    color: var(--text);
+    padding: 0.5rem 1rem; /* Adjust padding */
+    font-size: 1rem; /* Adjust font size */
+}
+
+.sticky-form-group .form-control::placeholder {
+    color: #aaa;
+}
+
+.sticky-order-section .form-select {
+    background-color: white; /* White select background */
+    border: 1px solid var(--border); /* Select border */
+    color: var(--text);
+    padding: 0.5rem 2.5rem 0.5rem 1rem; /* Adjust padding */
+    font-size: 1rem;
+    height: calc(1.5em + 1rem + 2px); /* Match height with input */
+}
+
+/* Style the flex container holding form groups */
+.d-flex.flex-wrap.align-items-center.justify-content-center.justify-content-md-around.gap-2 {
+     gap: 1.5rem !important; /* Adjust gap between items */
+     padding: 0 1rem; /* Add some padding within the flex container */
+}
+
+.sticky-btn {
+    background-color: var(--primary);
+    border: none;
+    padding: 0.75rem 2rem; /* Larger padding */
+    font-size: 1.1rem; /* Larger font size */
+    border-radius: 0.5rem;
+    transition: all 0.3s;
+    margin-top: 1rem; /* Space above the button */
+}
+
+.sticky-btn:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-2px); /* More pronounced hover effect */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add shadow on hover */
+}
+
+/* Menu Items Grid */
+.menu-items-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+    padding: 2rem 0;
+}
+
+.menu-item-card {
+    background: white;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 4px 6px var(--shadow);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.menu-item-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px var(--shadow);
+}
+
+.menu-item-image {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+}
+
+.menu-item-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s;
+}
+
+.menu-item-card:hover .menu-item-image img {
+    transform: scale(1.05);
+}
+
+.sold-out-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(231, 76, 60, 0.9);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.menu-item-content {
+    padding: 1.5rem;
+}
+
+.menu-item-title {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--text);
+}
+
+.menu-item-description {
+    color: var(--text-light);
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+
+.menu-item-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.price-tag {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.stock-status {
+    font-size: 0.9rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+}
+
+.stock-status.in-stock {
+    background-color: rgba(75, 183, 27, 0.1);
+    color: var(--success);
+}
+
+.stock-status.out-of-stock {
+    background-color: rgba(231, 76, 60, 0.1);
+    color: var(--danger);
+}
+
+.menu-item-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+
+.form-check {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-check-input {
+    width: 1.25rem;
+    height: 1.25rem;
+    margin: 0;
+    border: 2px solid var(--primary);
+}
+
+.form-check-input:checked {
+    background-color: var(--primary);
+    border-color: var(--primary);
+}
+
+.form-check-label {
+    font-weight: 500;
+    color: var(--text);
+    cursor: pointer;
+}
+
+.quantity-selector {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.quantity-btn {
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid var(--border);
+    background: white;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.quantity-btn:hover {
+    background: var(--background);
+}
+
+.quantity-input {
+    width: 3rem;
+    text-align: center;
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+}
+
+/* Order Confirmation Modal */
+.modal-content {
+    border-radius: 1rem;
+    border: none;
+}
+
+.modal-header {
+    background-color: var(--primary);
+    color: white;
+    border-radius: 1rem 1rem 0 0;
+    padding: 1rem 1.5rem;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.selected-items-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.selected-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.item-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.item-name {
+    font-weight: 500;
+}
+
+.item-quantity {
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+.item-price {
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.order-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-top: 2px solid var(--border);
+    margin-top: 1rem;
+}
+
+.total-label {
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.total-amount {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.order-details {
+    background: var(--background);
+    padding: 1rem;
+    border-radius: 0.5rem;
+}
+
+.detail-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border);
+}
+
+.modal-footer .btn {
+    padding: 0.5rem 1.5rem;
+    border-radius: 0.5rem;
+}
+
+/* Category Navigation */
+.category-nav-container {
+    position: relative;
+    margin-bottom: 30px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-radius: 1rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(230, 126, 34, 0.1);
+    overflow: visible;
+}
+
+.category-nav-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 0.5rem;
+    position: relative;
+}
+
+.category-nav-arrow {
+    background: linear-gradient(135deg, var(--primary) 0%, #d35400 100%);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(230, 126, 34, 0.4), 0 0 0 2px rgba(255, 255, 255, 0.1);
+    z-index: 10;
+    opacity: 1;
+    font-size: 1.1rem;
+    font-weight: bold;
+    position: relative;
+    overflow: hidden;
+    animation: arrow-pulse 3s ease-in-out infinite;
+}
+
+.category-nav-arrow::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s;
+}
+
+.category-nav-arrow:hover::before {
+    left: 100%;
+}
+
+.category-nav-arrow:hover {
+    background: linear-gradient(135deg, #d35400 0%, var(--primary) 100%);
+    transform: scale(1.15);
+    box-shadow: 0 6px 16px rgba(230, 126, 34, 0.5), 0 0 0 3px rgba(255, 255, 255, 0.2);
+    opacity: 1;
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.category-nav-arrow:active {
+    transform: scale(0.95);
+    box-shadow: 0 2px 8px rgba(230, 126, 34, 0.3);
+}
+
+.category-nav-arrow:focus {
+    outline: 3px solid var(--primary);
+    outline-offset: 2px;
+    box-shadow: 0 4px 12px rgba(230, 126, 34, 0.4), 0 0 0 3px rgba(230, 126, 34, 0.3);
+}
+
+.category-nav-arrow.hidden {
+    opacity: 0.3;
+    pointer-events: none;
+    transform: scale(0.8);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    animation: none;
+}
+
+@keyframes arrow-pulse {
+    0%, 100% { 
+        box-shadow: 0 4px 12px rgba(230, 126, 34, 0.4), 0 0 0 2px rgba(255, 255, 255, 0.1);
+    }
+    50% { 
+        box-shadow: 0 6px 16px rgba(230, 126, 34, 0.6), 0 0 0 3px rgba(255, 255, 255, 0.2);
+    }
+}
+
+.category-nav {
+    display: flex;
+    gap: 12px;
+    padding: 0 15px;
+    flex-grow: 1;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    scroll-snap-type: x mandatory;
+}
+
+.category-nav::-webkit-scrollbar {
+    display: none;
+}
+
+.category-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 12px 18px;
+    font-size: 0.9rem;
+    border-radius: 25px;
+    border: 2px solid transparent;
+    color: var(--secondary);
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+    flex-shrink: 0;
+    cursor: pointer;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    scroll-snap-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.category-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transition: left 0.5s;
+}
+
+.category-btn:hover::before {
+    left: 100%;
+}
+
+.category-btn:hover {
+    background: linear-gradient(135deg, var(--primary) 0%, #d35400 100%);
+    color: white;
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(230, 126, 34, 0.3);
+}
+
+.category-btn.active {
+    background: linear-gradient(135deg, var(--primary) 0%, #d35400 100%);
+    color: white;
+    border-color: var(--primary);
+    box-shadow: 0 4px 15px rgba(230, 126, 34, 0.4);
+    transform: translateY(-1px);
+}
+
+.category-btn .category-icon {
+    font-size: 1.2rem;
+    transition: transform 0.3s ease;
+}
+
+.category-btn:hover .category-icon,
+.category-btn.active .category-icon {
+    transform: scale(1.1);
+}
+
+.category-btn .category-text {
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.category-scroll-indicator {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, rgba(230, 126, 34, 0.2) 0%, rgba(230, 126, 34, 0.1) 100%);
+    z-index: 1;
+}
+
+.scroll-progress {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary) 0%, #d35400 100%);
+    border-radius: 2px;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 8px rgba(230, 126, 34, 0.4);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .header-image {
+        height: 250px;
+    }
+
+    .menu-items-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .sticky-order-section .container {
+        padding: 0 1rem;
+    }
+
+    .sticky-form-group {
+        width: 100%;
+    }
+
+    .modal-dialog {
+        margin: 1rem;
+    }
+
+    .d-flex.flex-wrap.align-items-center.justify-content-center.justify-content-md-around.gap-2 {
+        gap: 1rem !important;
+        padding: 0 0.5rem;
+    }
+
+    /* Mobile Category Navigation Optimizations */
+    .category-nav-container {
+        margin-bottom: 20px;
+        border-radius: 0.75rem;
+    }
+
+    .category-nav-wrapper {
+        padding: 0.75rem 0.25rem;
+    }
+
+    .category-nav-arrow {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+        border-width: 2px;
+        box-shadow: 0 3px 10px rgba(230, 126, 34, 0.4), 0 0 0 2px rgba(255, 255, 255, 0.15);
+    }
+
+    .category-nav {
+        gap: 8px;
+        padding: 0 10px;
+    }
+
+    .category-btn {
+        padding: 10px 14px;
+        font-size: 0.85rem;
+        border-radius: 20px;
+    }
+
+    .category-btn .category-icon {
+        font-size: 1rem;
+    }
+
+    .category-btn .category-text {
+        font-weight: 500;
+    }
+}
+
+@media (max-width: 480px) {
+    .category-nav-container {
+        margin: 0 -10px 20px -10px;
+        border-radius: 0;
+    }
+
+    .category-nav-wrapper {
+        padding: 0.5rem 0.25rem;
+    }
+
+    .category-nav-arrow {
+        width: 36px;
+        height: 36px;
+        font-size: 0.9rem;
+        border-width: 2px;
+        box-shadow: 0 2px 8px rgba(230, 126, 34, 0.4), 0 0 0 2px rgba(255, 255, 255, 0.1);
+    }
+
+    .category-nav {
+        gap: 6px;
+        padding: 0 8px;
+    }
+
+    .category-btn {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+        border-radius: 18px;
+    }
+
+    .category-btn .category-icon {
+        font-size: 0.9rem;
+    }
+}
+
+/* Touch Device Optimizations */
+@media (hover: none) and (pointer: coarse) {
+    .category-btn:hover {
+        transform: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .category-btn:active {
+        transform: scale(0.95);
+        background: linear-gradient(135deg, var(--primary) 0%, #d35400 100%);
+        color: white;
+    }
+
+    .category-nav-arrow:hover {
+        transform: none;
+    }
+
+    .category-nav-arrow:active {
+        transform: scale(0.9);
+    }
+}
+
+/* Accessibility Improvements */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Focus Styles */
+:focus {
+    outline: 3px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* High Contrast Mode */
+@media (forced-colors: active) {
+    .menu-item-card {
+        border: 2px solid CanvasText;
+    }
+
+    .sticky-btn {
+        border: 2px solid CanvasText;
+    }
+}
+/* Floating Place Order Button */
+.place-order-btn {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    z-index: 1055;
+    padding: 1rem 2rem;
+    font-size: 1.2rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    border-radius: 2rem;
+    transition: background 0.2s, box-shadow 0.2s;
+}
+.place-order-btn:hover, .place-order-btn:focus {
+    background: #198754;
+    color: #fff;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+}
+
+</style>
+
+{% endblock %}

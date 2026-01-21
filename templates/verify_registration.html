@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Email - BlueSpace Restaurants</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+            background-image: url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1600');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom right, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7));
+            pointer-events: none;
+        }
+
+        .verify-wrapper {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 500px;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .verify-container {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 24px;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+            padding: 3rem 2.5rem;
+            backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .verify-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #f093fb, #4facfe, #00f2fe);
+            background-size: 200% 100%;
+            animation: shimmer 3s linear infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .verify-icon {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .verify-icon i {
+            font-size: 4rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: inline-block;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .verify-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .verify-header h1 {
+            color: #2d3748;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.5px;
+        }
+
+        .verify-header p {
+            color: #718096;
+            font-size: 0.95rem;
+            font-weight: 400;
+            line-height: 1.6;
+        }
+
+        .email-highlight {
+            color: #667eea;
+            font-weight: 600;
+            word-break: break-all;
+        }
+
+        .code-input-group {
+            margin: 2rem 0;
+        }
+
+        .code-input {
+            width: 100%;
+            height: 70px;
+            padding: 1rem;
+            border: 3px solid #e2e8f0;
+            border-radius: 16px;
+            background: #f7fafc;
+            font-size: 1.5rem;
+            font-weight: 600;
+            text-align: center;
+            letter-spacing: 0.5rem;
+            font-family: 'Poppins', monospace;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .code-input:focus {
+            border-color: #667eea;
+            background: #ffffff;
+            box-shadow: 0 0 0 6px rgba(102, 126, 234, 0.1);
+            outline: none;
+        }
+
+        .code-input::placeholder {
+            letter-spacing: 0.2rem;
+            color: #cbd5e0;
+        }
+
+        .btn-verify {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 1rem 2rem;
+            font-weight: 600;
+            font-size: 1rem;
+            width: 100%;
+            border-radius: 12px;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            position: relative;
+            overflow: hidden;
+            font-family: 'Poppins', sans-serif;
+            letter-spacing: 0.5px;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-verify::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-verify:hover::before {
+            left: 100%;
+        }
+
+        .btn-verify:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-verify:active {
+            transform: translateY(0);
+        }
+
+        .action-links {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #e2e8f0;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .action-links a,
+        .action-links button {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            position: relative;
+        }
+
+        .action-links a::after,
+        .action-links button::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: #667eea;
+            transition: width 0.3s ease;
+        }
+
+        .action-links a:hover::after,
+        .action-links button:hover::after {
+            width: 100%;
+        }
+
+        .action-links a:hover,
+        .action-links button:hover {
+            color: #764ba2;
+        }
+
+        .alert {
+            border-radius: 12px;
+            border: none;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+            color: white;
+        }
+
+        .alert-warning {
+            background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+            color: white;
+        }
+
+        .alert-info {
+            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+            color: white;
+        }
+
+        .btn-close {
+            filter: brightness(0) invert(1);
+            opacity: 0.8;
+        }
+
+        .btn-close:hover {
+            opacity: 1;
+        }
+
+        .resend-info {
+            text-align: center;
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: #f7fafc;
+            border-radius: 12px;
+            color: #718096;
+            font-size: 0.85rem;
+        }
+
+        .countdown {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        @media (max-width: 576px) {
+            .verify-container {
+                padding: 2rem 1.5rem;
+                border-radius: 20px;
+            }
+
+            .verify-header h1 {
+                font-size: 1.75rem;
+            }
+
+            .code-input {
+                height: 60px;
+                font-size: 1.25rem;
+            }
+
+            .action-links {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .action-links a,
+            .action-links button {
+                text-align: center;
+                padding: 0.5rem 0;
+            }
+        }
+
+        .btn-verify.loading {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .btn-verify.loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            top: 50%;
+            left: 50%;
+            margin-left: -8px;
+            margin-top: -8px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="verify-wrapper">
+        <div class="verify-container">
+            <div class="verify-icon">
+                <i class="fas fa-envelope-circle-check"></i>
+            </div>
+            
+            <div class="verify-header">
+                <h1>Verify Your Email</h1>
+                <p>We've sent a verification code to<br><span class="email-highlight">{{ email }}</span></p>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category if category != 'message' else 'info' }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" id="verifyForm">
+                {{ form.csrf_token }}
+                
+                <div class="code-input-group">
+                    {{ form.verification_code(class="code-input", placeholder="Enter 6-digit code", id="verification_code", maxlength="6", required=True, autocomplete="off", autofocus=True) }}
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-verify" id="verifyBtn">
+                    <i class="fas fa-check-circle me-2"></i>Verify Email
+                </button>
+            </form>
+
+            <div class="action-links">
+                <form method="POST" action="{{ url_for('resend_verification_code') }}" id="resendForm" style="display: inline;">
+                    {{ form.csrf_token }}
+                    <button type="submit" class="btn-link" id="resendBtn">
+                        <i class="fas fa-redo me-1"></i>Resend Code
+                    </button>
+                </form>
+                <a href="{{ url_for('register') }}">
+                    <i class="fas fa-arrow-left me-1"></i>Start Over
+                </a>
+            </div>
+
+            <div class="resend-info">
+                <i class="fas fa-info-circle me-1"></i>
+                Didn't receive the code? Check your spam folder or click "Resend Code"
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Auto-format code input (uppercase, numbers only)
+        const codeInput = document.getElementById('verification_code');
+        
+        codeInput.addEventListener('input', function(e) {
+            // Remove any non-alphanumeric characters and convert to uppercase
+            this.value = this.value.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+            
+            // Limit to 6 characters
+            if (this.value.length > 6) {
+                this.value = this.value.slice(0, 6);
+            }
+        });
+
+        // Auto-submit when 6 characters are entered
+        codeInput.addEventListener('input', function() {
+            if (this.value.length === 6) {
+                // Small delay for better UX
+                setTimeout(() => {
+                    document.getElementById('verifyForm').requestSubmit();
+                }, 300);
+            }
+        });
+
+        // Paste handling
+        codeInput.addEventListener('paste', function(e) {
+            e.preventDefault();
+            const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+            const cleaned = pastedText.replace(/[^A-Z0-9]/gi, '').toUpperCase().slice(0, 6);
+            this.value = cleaned;
+            if (cleaned.length === 6) {
+                setTimeout(() => {
+                    document.getElementById('verifyForm').requestSubmit();
+                }, 300);
+            }
+        });
+
+        // Form submission loading state
+        document.getElementById('verifyForm').addEventListener('submit', function(e) {
+            const submitBtn = document.getElementById('verifyBtn');
+            submitBtn.classList.add('loading');
+            submitBtn.innerHTML = '<span style="opacity: 0;">Verify Email</span>';
+        });
+
+        // Resend button cooldown
+        let resendCooldown = 0;
+        const resendBtn = document.getElementById('resendBtn');
+        const resendForm = document.getElementById('resendForm');
+
+        resendForm.addEventListener('submit', function(e) {
+            if (resendCooldown > 0) {
+                e.preventDefault();
+                return false;
+            }
+            
+            resendCooldown = 60; // 60 seconds cooldown
+            updateResendButton();
+            
+            const interval = setInterval(() => {
+                resendCooldown--;
+                updateResendButton();
+                
+                if (resendCooldown <= 0) {
+                    clearInterval(interval);
+                }
+            }, 1000);
+        });
+
+        function updateResendButton() {
+            if (resendCooldown > 0) {
+                resendBtn.disabled = true;
+                resendBtn.innerHTML = `<i class="fas fa-clock me-1"></i>Resend in ${resendCooldown}s`;
+                resendBtn.style.opacity = '0.6';
+                resendBtn.style.cursor = 'not-allowed';
+            } else {
+                resendBtn.disabled = false;
+                resendBtn.innerHTML = '<i class="fas fa-redo me-1"></i>Resend Code';
+                resendBtn.style.opacity = '1';
+                resendBtn.style.cursor = 'pointer';
+            }
+        }
+
+        // Focus on input when page loads
+        window.addEventListener('load', function() {
+            codeInput.focus();
+        });
+    </script>
+</body>
+</html>

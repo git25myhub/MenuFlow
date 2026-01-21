@@ -1,0 +1,259 @@
+{% extends "admin_panel_base.html" %}
+
+{% block title %}Commission Dashboard - {{ current_user.restaurant_name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <i class="fas fa-chart-line text-primary"></i>
+                Commission Dashboard
+            </h2>
+        </div>
+    </div>
+
+    <!-- Commission Summary Cards -->
+    {% if summary %}
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Orders</h6>
+                            <h3 class="mb-0">{{ summary.total_orders }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-shopping-cart fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Commission</h6>
+                            <h3 class="mb-0">KES {{ "%.2f"|format(summary.total_commission) }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-money-bill-wave fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Pending Commission</h6>
+                            <h3 class="mb-0">KES {{ "%.2f"|format(summary.pending_commission) }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Paid Commission</h6>
+                            <h3 class="mb-0">KES {{ "%.2f"|format(summary.paid_commission) }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-check-circle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Payment Instructions -->
+    {% if platform_settings %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-info">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle"></i>
+                        Commission Payment Instructions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Platform M-Pesa Number:</h6>
+                            <p class="h5 text-primary">{{ platform_settings.platform_mpesa_number }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Payment Reference Format:</h6>
+                            <p class="text-muted">REST{{ current_user.id }}_{{ "now"|strftime("%Y_%m") }}</p>
+                        </div>
+                    </div>
+                    <div class="alert alert-info">
+                        <strong>How to pay commission:</strong>
+                        <ol class="mb-0 mt-2">
+                            <li>Send the commission amount to the platform M-Pesa number above</li>
+                            <li>Use the reference format shown above</li>
+                            <li>Keep the payment confirmation for your records</li>
+                            <li>Contact admin to confirm payment has been received</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Pending Bills -->
+    {% if pending_bills %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-invoice text-warning"></i>
+                        Pending Commission Bills
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Period</th>
+                                    <th>Orders</th>
+                                    <th>Amount</th>
+                                    <th>Due Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for bill in pending_bills %}
+                                <tr>
+                                    <td>{{ bill.period_start.strftime('%B %Y') }}</td>
+                                    <td>{{ bill.orders_count }}</td>
+                                    <td class="font-weight-bold">KES {{ "%.2f"|format(bill.total_commission) }}</td>
+                                    <td>
+                                        {% if bill.due_date < now %}
+                                        <span class="text-danger">{{ bill.due_date.strftime('%d/%m/%Y') }}</span>
+                                        {% else %}
+                                        {{ bill.due_date.strftime('%d/%m/%Y') }}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if bill.due_date < now %}
+                                        <span class="badge badge-danger">Overdue</span>
+                                        {% else %}
+                                        <span class="badge badge-warning">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Recent Commission Transactions -->
+    {% if recent_transactions %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history text-info"></i>
+                        Recent Commission Transactions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Order Amount</th>
+                                    <th>Commission</th>
+                                    <th>Rate</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in recent_transactions %}
+                                <tr>
+                                    <td>#{{ transaction.order_id }}</td>
+                                    <td>KES {{ "%.2f"|format(transaction.order_amount) }}</td>
+                                    <td class="font-weight-bold">KES {{ "%.2f"|format(transaction.commission_amount) }}</td>
+                                    <td>{{ "%.1f"|format(transaction.commission_rate_used) }}%</td>
+                                    <td>
+                                        {% if transaction.status == 'paid' %}
+                                        <span class="badge badge-success">Paid</span>
+                                        {% else %}
+                                        <span class="badge badge-warning">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ transaction.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- No Data Message -->
+    {% if not summary and not pending_bills and not recent_transactions %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No Commission Data Available</h5>
+                    <p class="text-muted">Commission data will appear here once you have processed orders.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+</style>
+{% endblock %} 

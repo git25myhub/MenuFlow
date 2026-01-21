@@ -1,0 +1,83 @@
+{% extends "restaurant_menu_layout.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="text-center">Payment Status</h3>
+                </div>
+                <div class="card-body text-center">
+                    <div id="stkPushStatus" class="d-none">
+                        <div class="spinner-border text-primary mb-4" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <h4>Processing Payment</h4>
+                        <p class="text-muted">Please check your phone for the M-Pesa prompt and complete the payment.</p>
+                        <p class="text-muted">Do not close this window. You will be redirected automatically once the payment is complete.</p>
+                    </div>
+
+                    <div id="manualPaymentStatus" class="d-none">
+                        <div class="alert alert-info">
+                            <h4>Waiting for Payment Confirmation</h4>
+                            <p class="text-muted">Please complete the payment on your phone following the instructions provided.</p>
+                            <p class="text-muted">Once you've made the payment, click the button below to confirm.</p>
+                        </div>
+                        <button class="btn btn-success" onclick="confirmManualPayment()">
+                            <i class="fas fa-check me-2"></i>I've Made the Payment
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Get payment method from URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentMethod = urlParams.get('method') || 'stk_push';
+    
+    // Show appropriate status section
+    if (paymentMethod === 'stk_push') {
+        document.getElementById('stkPushStatus').classList.remove('d-none');
+        // Start polling for STK push status
+        setInterval(checkPaymentStatus, 5000);
+    } else {
+        document.getElementById('manualPaymentStatus').classList.remove('d-none');
+    }
+
+    // Poll for payment status every 5 seconds
+    function checkPaymentStatus() {
+        fetch('/api/payment-status/{{ order_id }}')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    window.location.href = '/payment-success/' + data.order_id;
+                }
+            });
+    }
+
+    function confirmManualPayment() {
+        // Send confirmation to server
+        fetch('/confirm-manual-payment/{{ order_id }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = '/payment-success/' + data.order_id;
+            } else {
+                alert('Error confirming payment: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error confirming payment: ' + error);
+        });
+    }
+</script>
+{% endblock %} 

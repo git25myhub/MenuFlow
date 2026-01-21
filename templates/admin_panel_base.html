@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid mt-4 admin-shell">
+  <div class="row g-3 g-lg-4">
+    <nav class="col-md-3 col-lg-2 d-md-block admin-sidebar py-4">
+      <div class="position-sticky px-2">
+        <ul class="nav flex-column">
+          <li class="nav-item mb-2">
+            <a class="nav-link {{ 'active' if request.endpoint == 'profile' else '' }}" href="{{ url_for('profile') }}"><i class="fas fa-user me-2"></i>Profile</a>
+          </li>
+          <li class="nav-item mb-2">
+            <a class="nav-link {{ 'active' if request.endpoint == 'settings' else '' }}" href="{{ url_for('settings') }}"><i class="fas fa-cog me-2"></i>Settings</a>
+          </li>
+          <li class="nav-item mb-2">
+            <a class="nav-link {{ 'active' if request.endpoint == 'daraja_settings' else '' }}" href="{{ url_for('daraja_settings') }}"><i class="fas fa-money-bill-wave me-2"></i>M-Pesa Settings</a>
+          </li>
+          <li class="nav-item mb-2">
+            <a class="nav-link {{ 'active' if request.endpoint == 'help_info' else '' }}" href="{{ url_for('help_info') }}"><i class="fas fa-question-circle me-2"></i>Help</a>
+          </li>
+          <li class="nav-item mb-2">
+            <a class="nav-link {{ 'active' if request.endpoint == 'feedback' else '' }}" href="{{ url_for('feedback') }}"><i class="fas fa-comment-dots me-2"></i>Feedback</a>
+          </li>
+          <li class="nav-item mb-2">
+            <a class="nav-link {{ 'active' if request.endpoint == 'analytics' else '' }}" href="{{ url_for('analytics') }}"><i class="fas fa-chart-bar me-2"></i>Analytics</a>
+          </li>
+          <li class="nav-item mb-2">
+            <a class="nav-link {{ 'active' if request.endpoint == 'commission_dashboard' else '' }}" href="{{ url_for('commission_dashboard') }}"><i class="fas fa-money-bill-wave me-2"></i>Commission Dashboard</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 admin-main">
+      {% block admin_panel_content %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% endblock %}

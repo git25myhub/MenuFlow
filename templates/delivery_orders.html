@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Delivery Orders{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4 fw-bold text-center">Delivery Orders</h2>
+    {% if delivery_orders %}
+    <div class="row g-4">
+        {% for order in delivery_orders %}
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-header d-flex justify-content-between align-items-center bg-light border-0">
+                    <h5 class="mb-0">Order #{{ order.id }}</h5>
+                    <span class="badge {% if order.status == 'pending' %}bg-warning text-dark{% elif order.status == 'paid' %}bg-info text-dark{% elif order.status == 'preparing' %}bg-primary{% elif order.status == 'ready' %}bg-success{% else %}bg-secondary{% endif %} px-3 py-2 fs-6">
+                        {{ order.status|title }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <p class="card-text mb-1"><strong>Customer Name:</strong> {{ order.customer_name }}</p>
+                    <p class="card-text mb-1"><strong>Customer Phone:</strong> {{ order.customer_phone }}</p>
+                    <p class="card-text mb-1"><strong>Delivery Address:</strong> {{ order.delivery_address }}</p>
+                    <p class="card-text mb-1"><strong>Order Time:</strong> {{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                    <p class="card-text mb-1"><strong>Total:</strong> {{ order.total_amount|format_price(order.user.currency) }}</p>
+                    {% if order.special_instructions %}
+                    <p class="card-text mb-1"><strong>Special Instructions:</strong> <span class="fst-italic">{{ order.special_instructions }}</span></p>
+                    {% endif %}
+                    <div class="order-items mt-2">
+                        <strong>Items:</strong>
+                        <ul class="mb-0 ps-3">
+                            {% for item in order.items|from_json %}
+                            <li>{{ item.name }} (x{{ item.quantity }}) - {{ item.price|format_price(order.user.currency) }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-footer bg-white border-0">
+                    <div class="d-flex justify-content-end">
+                        {% if order.status == 'pending' %}
+                        <button class="btn btn-success btn-sm rounded-pill" onclick="markOrderDelivered({{ order.id }})">Mark as Delivered</button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info text-center mt-4">No delivery orders yet.</div>
+    {% endif %}
+</div>
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+// Initialize real-time updates using Socket.IO
+function initializeDeliveryUpdates() {
+    console.log('Initializing delivery updates (Socket.IO)...');
+    var socket = io({ transports: ['websocket'] });
+    if (typeof CURRENT_USER_ID !== 'undefined') {
+        socket.emit('join_delivery', { user_id: CURRENT_USER_ID });
+    }
+    socket.on('delivery_update', function(data) {
+        if (data.type === 'new_order') {
+            // Add new order to the list
+            const order = data.order;
+            const orderHtml = `
+                <div class="col-md-6">
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="card-header d-flex justify-content-between align-items-center bg-light border-0">
+                            <h5 class="mb-0">Order #${order.id}</h5>
+                            <span class="badge bg-warning text-dark px-3 py-2 fs-6">
+                                ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text mb-1"><strong>Customer Name:</strong> ${order.customer_name}</p>
+                            <p class="card-text mb-1"><strong>Customer Phone:</strong> ${order.customer_phone}</p>
+                            <p class="card-text mb-1"><strong>Delivery Address:</strong> ${order.delivery_address}</p>
+                            <p class="card-text mb-1"><strong>Order Time:</strong> ${order.created_at}</p>
+                            <p class="card-text mb-1"><strong>Total:</strong> ${order.total_amount}</p>
+                            <div class="order-items mt-2">
+                                <strong>Items:</strong>
+                                <ul class="mb-0 ps-3">
+                                    ${order.items.map(item => `<li>${item.name} (x${item.quantity})</li>`).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-white border-0">
+                            <div class="d-flex justify-content-end">
+                                <button class="btn btn-success btn-sm rounded-pill" onclick="markOrderDelivered(${order.id})">Mark as Delivered</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            // Insert new order at the top of the list
+            const ordersContainer = document.querySelector('.row.g-4');
+            if (ordersContainer) {
+                ordersContainer.insertAdjacentHTML('afterbegin', orderHtml);
+            }
+        } else if (data.type === 'error') {
+            console.error('Error in delivery updates:', data.message);
+        }
+    });
+}
+
+function markOrderDelivered(orderId) {
+    if (confirm('Are you sure you want to mark this order as delivered?')) {
+        fetch(`/api/order/${orderId}/deliver`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+            }
+        }).then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Order marked as delivered!');
+                // Remove the order from the list
+                const orderCard = document.querySelector(`[data-order-id="${orderId}"]`);
+                if (orderCard) {
+                    orderCard.remove();
+                }
+            } else {
+                alert('Failed to mark order as delivered.' + (data.error || ''));
+            }
+        }).catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred.');
+        });
+    }
+}
+
+// Initialize delivery updates when document is ready
+document.addEventListener('DOMContentLoaded', function() {
+    initializeDeliveryUpdates();
+});
+</script>
+{% endblock %} 

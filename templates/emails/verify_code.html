@@ -1,0 +1,15 @@
+{% extends 'emails/base.html' %}
+{% block head %}{% set subject = 'Verify your email' %}{% endblock %}
+{% block content %}
+<h1>Verify your email</h1>
+<p>Use the verification code below to complete your registration.</p>
+<p><span class="code">{{ code }}</span></p>
+<p class="muted">This code will expire in 30 minutes.</p>
+{% endblock %}
+{% block text_fallback %}
+Verify your email\n
+Your verification code: {{ code }}\n
+This code expires in 30 minutes.
+{% endblock %}
+
+

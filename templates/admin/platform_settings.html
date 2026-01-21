@@ -1,0 +1,40 @@
+{% extends "admin/admin_base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Platform Settings</h2>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <div class="mb-3">
+            {{ form.callback_url_sandbox.label(class="form-label") }}
+            {{ form.callback_url_sandbox(class="form-control") }}
+            {% if form.callback_url_sandbox.errors %}
+                {% for error in form.callback_url_sandbox.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+            {% endif %}
+        </div>
+        <div class="mb-3">
+            {{ form.callback_url_production.label(class="form-label") }}
+            {{ form.callback_url_production(class="form-control") }}
+            {% if form.callback_url_production.errors %}
+                {% for error in form.callback_url_production.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+            {% endif %}
+        </div>
+        {{ form.submit(class="btn btn-primary") }}
+    </form>
+</div>
+{% endblock %} 

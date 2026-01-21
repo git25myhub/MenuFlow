@@ -1,0 +1,28 @@
+{% extends "admin/admin_base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>User Feedback</h2>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>User</th>
+                    <th>Email</th>
+                    <th>Message</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for feedback in feedbacks %}
+                <tr>
+                    <td>{{ feedback.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>{{ feedback.user.restaurant_name if feedback.user else 'Guest' }}</td>
+                    <td>{{ feedback.email }}</td>
+                    <td>{{ feedback.message }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %} 

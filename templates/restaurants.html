@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discover Amazing Restaurants - BlueSpace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0D8ABC', // Blue theme
+                        secondary: '#1f2937', // gray-800
+                        accent: '#14b8a6', // teal-500
+                        muted: '#9ca3af', // gray-400
+                    },
+                    fontFamily: {
+                        sans: ['Segoe UI', 'Tahoma', 'Geneva', 'Verdana', 'sans-serif'],
+                    },
+                },
+            },
+        };
+    </script>
+    <style>
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .animate-fade-in {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        .filter-dropdown {
+            display: none;
+        }
+        .filter-dropdown.show {
+            display: block;
+        }
+        .restaurant-card {
+            display: block;
+        }
+        .restaurant-card.hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans">
+    <!-- Hero Section -->
+    <section class="relative min-h-[300px] max-h-[450px] flex items-center justify-center overflow-hidden">
+        <!-- Background Image with Overlay -->
+        <div 
+            class="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            style="background-image: url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1600');"
+        >
+            <div class="absolute inset-0 bg-gradient-to-br from-black/70 via-black/50 to-black/70"></div>
+        </div>
+
+        <!-- Floating Icons -->
+        <div class="absolute top-20 left-10 opacity-20 animate-float">
+            <i class="fas fa-utensils text-primary text-6xl"></i>
+        </div>
+        <div class="absolute bottom-32 right-16 opacity-20 animate-float delay-1000">
+            <i class="fas fa-mobile-alt text-yellow-400 text-5xl"></i>
+        </div>
+        <div class="absolute top-1/2 right-8 opacity-20 animate-float delay-2000">
+            <i class="fas fa-users text-accent text-4xl"></i>
+        </div>
+
+        <!-- Hero Content -->
+        <div class="relative z-10 container mx-auto px-4 text-center text-white">
+            <div class="max-w-4xl mx-auto animate-fade-in">
+                <h1 class="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 bg-gradient-to-r from-white via-yellow-400 to-teal-400 bg-clip-text text-transparent leading-tight">
+                    Discover Amazing Restaurants
+                </h1>
+                <p class="text-xl md:text-2xl lg:text-3xl mb-8 text-white/90 max-w-3xl mx-auto leading-relaxed">
+                    Explore a curated collection of the finest dining experiences in your area
+                </p>
+                
+                <!-- Search Bar -->
+                <div class="max-w-2xl mx-auto mb-8">
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            id="searchInput"
+                            placeholder="Search restaurants, cuisine, or location..." 
+                            class="w-full px-6 py-4 pl-12 text-gray-800 bg-white rounded-full shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50"
+                        >
+                        <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <button id="clearSearch" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 hidden">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scroll Indicator -->
+        <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+            <div class="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center">
+                <div class="w-1 h-3 bg-white/60 rounded-full mt-2 animate-pulse"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Restaurants Section -->
+    <section class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <!-- Header with Filters -->
+            <div class="flex flex-col md:flex-row justify-between items-center mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 md:mb-0">
+                    <span id="restaurantCount">{{ restaurants|length }}</span> Restaurants Found
+                </h2>
+                <div class="relative">
+                    <button id="filterBtn" class="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
+                        <i class="fas fa-filter"></i>
+                        Filters
+                        <i class="fas fa-chevron-down ml-1"></i>
+                    </button>
+                    
+                    <!-- Filter Dropdown -->
+                    <div id="filterDropdown" class="filter-dropdown absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                        <div class="p-4">
+                            <h3 class="font-semibold text-gray-800 mb-3">Filter Options</h3>
+                            
+                            <!-- Sort By -->
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+                                <select id="sortBy" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary">
+                                    <option value="name">Name (A-Z)</option>
+                                    <option value="name-desc">Name (Z-A)</option>
+                                    <option value="newest">Newest First</option>
+                                    <option value="oldest">Oldest First</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Show Only -->
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Show Only</label>
+                                <div class="space-y-2">
+                                    <label class="flex items-center">
+                                        <input type="checkbox" id="hasWebsite" class="mr-2">
+                                        <span class="text-sm">Has Website</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" id="hasPhone" class="mr-2">
+                                        <span class="text-sm">Has Phone</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" id="hasSocialMedia" class="mr-2">
+                                        <span class="text-sm">Has Social Media</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <!-- Clear Filters -->
+                            <button id="clearFilters" class="w-full px-3 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition text-sm">
+                                Clear All Filters
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Restaurant Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {% for restaurant in restaurants %}
+                <div class="restaurant-card bg-white rounded-xl shadow-lg overflow-hidden card-hover" 
+                     data-name="{{ restaurant.restaurant_name|lower }}"
+                     data-address="{{ restaurant.restaurant_address|lower if restaurant.restaurant_address else '' }}"
+                     data-description="{{ restaurant.restaurant_description|lower if restaurant.restaurant_description else '' }}"
+                     data-website="{{ 'yes' if restaurant.website else 'no' }}"
+                     data-phone="{{ 'yes' if restaurant.contact_phone else 'no' }}"
+                     data-social="{{ 'yes' if restaurant.social_media_links else 'no' }}"
+                     data-date="{{ loop.index }}">
+                    <!-- Restaurant Avatar -->
+                    <div class="text-center pt-8 pb-4">
+                        {% if restaurant.logo_filename %}
+                            {% if restaurant.logo_filename.startswith('http') %}
+                                <img src="{{ restaurant.logo_filename }}" alt="{{ restaurant.restaurant_name }} Logo" class="w-20 h-20 rounded-full mx-auto mb-3 object-cover bg-primary">
+                            {% else %}
+                                <img src="{{ url_for('static', filename='uploads/' + restaurant.logo_filename) }}" alt="{{ restaurant.restaurant_name }} Logo" class="w-20 h-20 rounded-full mx-auto mb-3 object-cover bg-primary">
+                            {% endif %}
+                        {% else %}
+                            <div class="w-20 h-20 rounded-full mx-auto mb-3 bg-primary flex items-center justify-center text-white text-2xl font-bold">
+                                {{ restaurant.restaurant_name[:2].upper() }}
+                            </div>
+                        {% endif %}
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">{{ restaurant.restaurant_name }}</h3>
+                    </div>
+
+                    <!-- Restaurant Details -->
+                    <div class="px-6 pb-6">
+                        <!-- Location -->
+                        <div class="flex items-center gap-2 mb-3">
+                            <i class="fas fa-map-marker-alt text-primary text-sm"></i>
+                            <span class="text-gray-600 text-sm">{{ restaurant.restaurant_address or "Address not provided" }}</span>
+                        </div>
+
+                        <!-- Description -->
+                        {% if restaurant.restaurant_description %}
+                        <p class="text-gray-600 text-sm mb-4 leading-relaxed">
+                            {{ restaurant.restaurant_description[:100] }}{% if restaurant.restaurant_description|length > 100 %}...{% endif %}
+                        </p>
+                        {% endif %}
+
+                        <!-- Opening Hours -->
+                        {% if restaurant.opening_hours %}
+                        <div class="flex items-center gap-2 mb-3">
+                            <i class="fas fa-clock text-primary text-sm"></i>
+                            <span class="text-gray-600 text-sm">{{ restaurant.opening_hours }}</span>
+                        </div>
+                        {% endif %}
+
+                        <!-- Contact Phone -->
+                        {% if restaurant.contact_phone %}
+                        <div class="flex items-center gap-2 mb-3">
+                            <i class="fas fa-phone text-primary text-sm"></i>
+                            <span class="text-gray-600 text-sm">{{ restaurant.contact_phone }}</span>
+                        </div>
+                        {% endif %}
+
+                        <!-- Website -->
+                        {% if restaurant.website %}
+                        <div class="flex items-center gap-2 mb-3">
+                            <i class="fas fa-globe text-primary text-sm"></i>
+                            <a href="{{ restaurant.website }}" target="_blank" class="text-primary text-sm hover:underline">Visit Website</a>
+                        </div>
+                        {% endif %}
+
+                        <!-- Social Media -->
+                        {% if restaurant.social_media_links %}
+                        <div class="mb-4">
+                            <div class="flex items-center gap-2 mb-2">
+                                <i class="fas fa-users text-primary text-sm"></i>
+                                <span class="text-gray-600 text-sm font-medium">Social Media:</span>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                {% for link in restaurant.social_media_links %}
+                                <a href="{{ link.url }}" target="_blank" class="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full hover:bg-gray-200 transition">
+                                    {{ link.name }}
+                                </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- View Menu Button -->
+                        <a href="{{ url_for('restaurant_menu', user_id=restaurant.id) }}" class="w-full bg-primary text-white py-3 px-4 rounded-lg font-semibold text-center block hover:bg-blue-700 transition">
+                            View Menu
+                        </a>
+                    </div>
+                </div>
+                {% else %}
+                <div class="col-span-full text-center py-16">
+                    <div class="text-gray-500">
+                        <i class="fas fa-utensils text-6xl mb-4"></i>
+                        <p class="text-xl">No restaurants registered yet.</p>
+                        <p class="text-gray-400 mt-2">Check back later for amazing dining options!</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Font Awesome -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+
+    <!-- Search and Filter JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            const clearSearchBtn = document.getElementById('clearSearch');
+            const filterBtn = document.getElementById('filterBtn');
+            const filterDropdown = document.getElementById('filterDropdown');
+            const clearFiltersBtn = document.getElementById('clearFilters');
+            const restaurantCards = document.querySelectorAll('.restaurant-card');
+            const restaurantCount = document.getElementById('restaurantCount');
+            
+            let currentFilters = {
+                search: '',
+                sortBy: 'name',
+                hasWebsite: false,
+                hasPhone: false,
+                hasSocialMedia: false
+            };
+
+            // Search functionality
+            searchInput.addEventListener('input', function() {
+                currentFilters.search = this.value.toLowerCase();
+                clearSearchBtn.classList.toggle('hidden', !this.value);
+                filterRestaurants();
+            });
+
+            clearSearchBtn.addEventListener('click', function() {
+                searchInput.value = '';
+                currentFilters.search = '';
+                this.classList.add('hidden');
+                filterRestaurants();
+            });
+
+            // Filter dropdown toggle
+            filterBtn.addEventListener('click', function() {
+                filterDropdown.classList.toggle('show');
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!filterBtn.contains(e.target) && !filterDropdown.contains(e.target)) {
+                    filterDropdown.classList.remove('show');
+                }
+            });
+
+            // Sort functionality
+            document.getElementById('sortBy').addEventListener('change', function() {
+                currentFilters.sortBy = this.value;
+                filterRestaurants();
+            });
+
+            // Checkbox filters
+            document.getElementById('hasWebsite').addEventListener('change', function() {
+                currentFilters.hasWebsite = this.checked;
+                filterRestaurants();
+            });
+
+            document.getElementById('hasPhone').addEventListener('change', function() {
+                currentFilters.hasPhone = this.checked;
+                filterRestaurants();
+            });
+
+            document.getElementById('hasSocialMedia').addEventListener('change', function() {
+                currentFilters.hasSocialMedia = this.checked;
+                filterRestaurants();
+            });
+
+            // Clear all filters
+            clearFiltersBtn.addEventListener('click', function() {
+                searchInput.value = '';
+                document.getElementById('sortBy').value = 'name';
+                document.getElementById('hasWebsite').checked = false;
+                document.getElementById('hasPhone').checked = false;
+                document.getElementById('hasSocialMedia').checked = false;
+                clearSearchBtn.classList.add('hidden');
+                
+                currentFilters = {
+                    search: '',
+                    sortBy: 'name',
+                    hasWebsite: false,
+                    hasPhone: false,
+                    hasSocialMedia: false
+                };
+                
+                filterRestaurants();
+                filterDropdown.classList.remove('show');
+            });
+
+            function filterRestaurants() {
+                let visibleCount = 0;
+                const cards = Array.from(restaurantCards);
+
+                cards.forEach(card => {
+                    let shouldShow = true;
+
+                    // Search filter
+                    if (currentFilters.search) {
+                        const name = card.dataset.name;
+                        const address = card.dataset.address;
+                        const description = card.dataset.description;
+                        
+                        if (!name.includes(currentFilters.search) && 
+                            !address.includes(currentFilters.search) && 
+                            !description.includes(currentFilters.search)) {
+                            shouldShow = false;
+                        }
+                    }
+
+                    // Checkbox filters
+                    if (currentFilters.hasWebsite && card.dataset.website === 'no') {
+                        shouldShow = false;
+                    }
+                    if (currentFilters.hasPhone && card.dataset.phone === 'no') {
+                        shouldShow = false;
+                    }
+                    if (currentFilters.hasSocialMedia && card.dataset.social === 'no') {
+                        shouldShow = false;
+                    }
+
+                    // Show/hide card
+                    if (shouldShow) {
+                        card.classList.remove('hidden');
+                        visibleCount++;
+                    } else {
+                        card.classList.add('hidden');
+                    }
+                });
+
+                // Sort cards
+                const container = cards[0].parentElement;
+                cards.sort((a, b) => {
+                    if (currentFilters.sortBy === 'name') {
+                        return a.dataset.name.localeCompare(b.dataset.name);
+                    } else if (currentFilters.sortBy === 'name-desc') {
+                        return b.dataset.name.localeCompare(a.dataset.name);
+                    } else if (currentFilters.sortBy === 'newest') {
+                        return parseInt(b.dataset.date) - parseInt(a.dataset.date);
+                    } else if (currentFilters.sortBy === 'oldest') {
+                        return parseInt(a.dataset.date) - parseInt(b.dataset.date);
+                    }
+                });
+
+                // Re-append sorted cards
+                cards.forEach(card => {
+                    container.appendChild(card);
+                });
+
+                // Update count
+                restaurantCount.textContent = visibleCount;
+            }
+
+            // Initialize
+            filterRestaurants();
+        });
+    </script>
+</body>
+</html> 

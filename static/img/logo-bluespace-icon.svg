@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="planetBlue" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#90caf9"/>
+      <stop offset="100%" stop-color="#1976D2"/>
+    </radialGradient>
+    <linearGradient id="bgBlue" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1976D2"/>
+      <stop offset="1" stop-color="#0A2342"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- Background -->
+  <rect width="128" height="128" rx="32" fill="url(#bgBlue)"/>
+  <!-- Crescent planet -->
+  <circle cx="40" cy="44" r="22" fill="url(#planetBlue)"/>
+  <path d="M40 22a22 22 0 1 1 0 44a18 18 0 1 0 0-44z" fill="#0A2342" fill-opacity="0.7"/>
+  <!-- Orbit ring -->
+  <ellipse cx="40" cy="44" rx="28" ry="6" fill="#90caf9" fill-opacity="0.18"/>
+  <!-- Stars -->
+  <circle cx="18" cy="20" r="1.5" fill="#fff"/>
+  <circle cx="110" cy="30" r="1" fill="#fff"/>
+  <circle cx="100" cy="110" r="1.2" fill="#90caf9"/>
+  <circle cx="80" cy="18" r="0.8" fill="#fff"/>
+  <circle cx="60" cy="110" r="1" fill="#90caf9"/>
+  <!-- Abstract QR code: circular/pixelated style -->
+  <g filter="url(#glow)">
+    <rect x="74" y="74" width="16" height="16" rx="4" fill="#fff" fill-opacity="0.13"/>
+    <circle cx="82" cy="82" r="5" fill="#1976D2"/>
+    <circle cx="104" cy="74" r="3" fill="#90caf9"/>
+    <circle cx="104" cy="104" r="3" fill="#1976D2"/>
+    <circle cx="74" cy="104" r="3" fill="#90caf9"/>
+    <rect x="94" y="94" width="6" height="6" rx="2" fill="#1976D2"/>
+    <rect x="94" y="82" width="4" height="4" rx="1" fill="#90caf9"/>
+    <rect x="82" y="94" width="4" height="4" rx="1" fill="#90caf9"/>
+  </g>
+  <!-- Small rocket -->
+  <g>
+    <rect x="60" y="60" width="6" height="16" rx="3" fill="#fff"/>
+    <polygon points="63,56 67,66 59,66" fill="#1976D2"/>
+    <rect x="62" y="76" width="2" height="6" rx="1" fill="#90caf9"/>
+  </g>
+</svg> 

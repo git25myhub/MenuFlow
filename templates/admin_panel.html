@@ -1,0 +1,131 @@
+{% extends 'admin_panel_base.html' %}
+
+{% block admin_panel_content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <div>
+    <h2 class="mb-1">Admin Dashboard</h2>
+    <p class="text-muted mb-0">Overview and quick actions</p>
+  </div>
+  <a href="{{ url_for('analytics') }}" class="btn btn-outline-primary">
+    <i class="fas fa-chart-line me-2"></i>View Analytics
+  </a>
+  </div>
+
+<!-- KPI Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-12 col-md-6 col-xl-3">
+    <div class="card h-100 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="text-muted">Orders Today</div>
+            <div class="h3 mb-0">--</div>
+          </div>
+          <div class="text-primary"><i class="fas fa-receipt fa-lg"></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-md-6 col-xl-3">
+    <div class="card h-100 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="text-muted">Revenue Today</div>
+            <div class="h3 mb-0">--</div>
+          </div>
+          <div class="text-success"><i class="fas fa-dollar-sign fa-lg"></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-md-6 col-xl-3">
+    <div class="card h-100 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="text-muted">Feedback</div>
+            <div class="h3 mb-0">--</div>
+          </div>
+          <div class="text-info"><i class="fas fa-comment-dots fa-lg"></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-md-6 col-xl-3">
+    <div class="card h-100 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="text-muted">Commission</div>
+            <div class="h3 mb-0">--</div>
+          </div>
+          <div class="text-warning"><i class="fas fa-percent fa-lg"></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-primary" href="{{ url_for('settings') }}"><i class="fas fa-cog me-2"></i>Settings</a>
+      <a class="btn btn-outline-primary" href="{{ url_for('profile') }}"><i class="fas fa-user me-2"></i>Profile</a>
+      <a class="btn btn-outline-primary" href="{{ url_for('daraja_settings') }}"><i class="fas fa-money-bill-wave me-2"></i>M-Pesa</a>
+      <a class="btn btn-outline-primary" href="{{ url_for('commission_dashboard') }}"><i class="fas fa-chart-bar me-2"></i>Commission</a>
+      <a class="btn btn-outline-primary" href="{{ url_for('feedback') }}"><i class="fas fa-comment-dots me-2"></i>Feedback</a>
+      <a class="btn btn-outline-primary" href="{{ url_for('help_info') }}"><i class="fas fa-question-circle me-2"></i>Help</a>
+    </div>
+  </div>
+  
+</div>
+
+<div class="row g-3">
+  <!-- Recent Activity -->
+  <div class="col-12 col-xl-8">
+    <div class="card shadow-sm h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <span>Recent Activity</span>
+        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#recentActivity" aria-expanded="true" aria-controls="recentActivity">
+          Toggle
+        </button>
+      </div>
+      <div id="recentActivity" class="collapse show">
+        <div class="list-group list-group-flush">
+          <div class="list-group-item d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+              <i class="fas fa-user text-muted"></i>
+              <span>Profile viewed</span>
+            </div>
+            <small class="text-muted">Just now</small>
+          </div>
+          <div class="list-group-item d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+              <i class="fas fa-cog text-muted"></i>
+              <span>Settings updated</span>
+            </div>
+            <small class="text-muted">Today</small>
+          </div>
+          <div class="list-group-item text-center text-muted">More activity will appear here…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tips / Shortcuts -->
+  <div class="col-12 col-xl-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h5 class="card-title">Get More Out of BlueSpace</h5>
+        <p class="text-muted">Visit Help for guides, or send us Feedback.</p>
+        <div class="d-grid gap-2">
+          <a class="btn btn-outline-primary" href="{{ url_for('help_info') }}"><i class="fas fa-book-open me-2"></i>Help Center</a>
+          <a class="btn btn-outline-primary" href="{{ url_for('feedback') }}"><i class="fas fa-paper-plane me-2"></i>Send Feedback</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

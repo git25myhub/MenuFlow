@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}Smart Kitchen{% endblock %}
+
+{% block content %}
+<style>
+    /* Full-page background image (same as Home) */
+    .smart-hero-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1600');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        z-index: 0;
+    }
+    .smart-hero-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(0,0,0,0.70), rgba(0,0,0,0.50), rgba(0,0,0,0.70));
+        z-index: 0;
+    }
+
+    .smart-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 16px;
+        align-items: stretch;
+    }
+    .smart-card {
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.12);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        min-height: 220px;
+        opacity: 1;
+        transition: opacity 0.6s ease, transform 0.3s ease;
+    }
+    .smart-card.fade-out {
+        opacity: 0;
+        transform: scale(0.98);
+    }
+    .smart-card .header {
+        padding: 14px 18px;
+        border-bottom: 1px solid rgba(255,255,255,0.12);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-radius: 16px 16px 0 0;
+        background: linear-gradient(180deg, rgba(0,0,0,0.25), rgba(0,0,0,0));
+    }
+    .smart-card .body { padding: 14px 18px; color: rgba(255,255,255,0.92); }
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        letter-spacing: 0.02em;
+        box-shadow: 0 0 0 rgba(0,0,0,0);
+    }
+    .status-badge.bg-primary { box-shadow: 0 0 18px rgba(13,110,253,0.35); }
+    .status-badge.bg-success { box-shadow: 0 0 18px rgba(25,135,84,0.35); }
+    .items { margin: 0; padding-left: 18px; }
+    .items li { margin: 2px 0; }
+    .items li::marker { color: rgba(255,255,255,0.55); }
+    .meta { font-size: 0.9rem; color: rgba(255,255,255,0.75); }
+    .title { color: #fff; }
+
+    .smart-card:hover { transform: translateY(-2px); }
+</style>
+
+<!-- Page background (fixed) -->
+<div class="smart-hero-bg"></div>
+<div class="smart-hero-overlay"></div>
+
+<div class="container my-4 position-relative" style="z-index: 1;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold mb-0 title"><i class="fas fa-kitchen-set me-2"></i>Smart Kitchen</h2>
+        <div class="text-white-50">Preparing and Ready orders only</div>
+    </div>
+
+    <div id="smartGrid" class="smart-grid">
+        {% for order in dine_in_orders %}
+        <div class="smart-card" data-order-id="{{ order.id }}" data-order-type="dine_in">
+            <div class="header">
+                <div>
+                    <div class="fw-semibold">Order #{{ order.id }} · Table {{ order.table_number }}</div>
+                    <div class="meta">{{ order.created_at|strftime('%Y-%m-%d %H:%M') }}</div>
+                </div>
+                <span class="status-badge {% if order.status == 'preparing' %}bg-primary text-white{% elif order.status == 'ready' %}bg-success text-white{% else %}bg-secondary text-white{% endif %}">
+                    {{ order.status|title }}
+                </span>
+            </div>
+            <div class="body">
+                <ul class="items">
+                    {% for item in order.items|from_json %}
+                    <li>{{ item.quantity }}x {{ item.name }}</li>
+                    {% endfor %}
+                </ul>
+                {% if order.special_instructions %}
+                <div class="mt-2"><strong>Note:</strong> <span class="fst-italic">{{ order.special_instructions }}</span></div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+
+        {% for order in delivery_orders %}
+        <div class="smart-card" data-order-id="{{ order.id }}" data-order-type="delivery">
+            <div class="header">
+                <div>
+                    <div class="fw-semibold"><i class="fas fa-truck me-1"></i>Delivery #{{ order.id }}</div>
+                    <div class="meta">{{ order.customer_name }} · {{ order.created_at|strftime('%Y-%m-%d %H:%M') }}</div>
+                </div>
+                <span class="status-badge {% if order.status == 'preparing' %}bg-primary text-white{% elif order.status == 'ready' %}bg-success text-white{% else %}bg-secondary text-white{% endif %}">
+                    {{ order.status|title }}
+                </span>
+            </div>
+            <div class="body">
+                <ul class="items">
+                    {% for item in order.items|from_json %}
+                    <li>{{ item.quantity }}x {{ item.name }}</li>
+                    {% endfor %}
+                </ul>
+                {% if order.special_instructions %}
+                <div class="mt-2"><strong>Note:</strong> <span class="fst-italic">{{ order.special_instructions }}</span></div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+// Utilities
+function statusClass(status) {
+    const map = { preparing: 'bg-primary text-white', ready: 'bg-success text-white' };
+    return map[status] || 'bg-secondary text-white';
+}
+
+function formatCurrency(amount, currency) {
+    const symbols = { USD: '$', KES: 'KSh', EUR: '€', GBP: '£', INR: '₹', AUD: 'A$', CAD: 'C$', JPY: '¥' };
+    const sym = symbols[currency] || '$';
+    const val = parseFloat(amount || 0);
+    return `${sym}${isNaN(val) ? '0.00' : val.toFixed(2)}`;
+}
+
+function upsertCard(order) {
+    const grid = document.getElementById('smartGrid');
+    let card = grid.querySelector(`[data-order-id="${order.id}"]`);
+    const isDelivery = order.order_type === 'delivery' || order.is_delivery;
+    const createdAt = order.created_at_formatted || order.created_at || '';
+    const items = (order.items || []).map(i => `<li>${i.quantity}x ${i.name}</li>`).join('');
+    const note = order.special_instructions ? `<div class="mt-2"><strong>Note:</strong> <span class="fst-italic">${order.special_instructions}</span></div>` : '';
+
+    const headerLeft = isDelivery
+      ? `<div class="fw-semibold"><i class=\"fas fa-truck me-1\"></i>Delivery #${order.id}</div><div class=\"meta\">${order.customer_name || ''} · ${createdAt}</div>`
+      : `<div class=\"fw-semibold\">Order #${order.id} · Table ${order.table_number || ''}</div><div class=\"meta\">${createdAt}</div>`;
+
+    const html = `
+      <div class=\"header\">
+        <div>${headerLeft}</div>
+        <span class=\"status-badge ${statusClass(order.status)}\">${(order.status||'').charAt(0).toUpperCase()+ (order.status||'').slice(1)}</span>
+      </div>
+      <div class=\"body\">
+        <ul class=\"items\">${items}</ul>
+        ${note}
+      </div>
+    `;
+
+    if (!card) {
+        card = document.createElement('div');
+        card.className = 'smart-card';
+        card.setAttribute('data-order-id', order.id);
+        card.setAttribute('data-order-type', isDelivery ? 'delivery' : 'dine_in');
+        card.innerHTML = html;
+        grid.prepend(card);
+    } else {
+        card.innerHTML = html;
+        card.classList.remove('fade-out');
+    }
+}
+
+function removeCard(orderId) {
+    const grid = document.getElementById('smartGrid');
+    const card = grid.querySelector(`[data-order-id="${orderId}"]`);
+    if (card) {
+        card.classList.add('fade-out');
+        setTimeout(() => card.remove(), 650);
+    }
+}
+
+function initSocket() {
+    if (!window.socket) {
+        window.socket = io({ transports: ['websocket'] });
+    }
+    window.socket.on('connect', function() {
+        window.socket.emit('join_orders', { user_id: CURRENT_USER_ID });
+    });
+    window.socket.on('order_update', function(order) {
+        if (!order || !order.status) return;
+        const status = (order.status || '').toLowerCase();
+        if (status === 'delivered' || status === 'cancelled' || status === 'archived') {
+            removeCard(order.id);
+            return;
+        }
+        if (status === 'preparing' || status === 'ready') {
+            upsertCard(order);
+        }
+    });
+}
+
+(function ensureSocketIo() {
+    if (window.io && typeof window.io === 'function') {
+        initSocket();
+        return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://cdn.socket.io/4.7.5/socket.io.min.js';
+    script.onload = initSocket;
+    document.head.appendChild(script);
+})();
+
+</script>
+{% endblock %}
+{% endblock %}
+
+

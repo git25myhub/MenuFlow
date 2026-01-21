@@ -1,0 +1,135 @@
+<div id="chartsSection">
+    <!-- Revenue Chart -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h3 class="card-title mb-1">💰 Revenue Trend</h3>
+                    <p class="text-muted mb-0">Displays the trend of revenue over the selected time period.</p>
+                </div>
+                <button onclick="downloadChartImage('revenueChart', 'revenue_trend')" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-download me-2"></i>Download Chart
+                </button>
+            </div>
+            <div class="chart-container" style="position: relative; height:400px; width:100%">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Best Selling Items Chart -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h3 class="card-title mb-1">🏆 Best Selling Items</h3>
+                    <p class="text-muted mb-0">Shows the top-selling menu items by quantity or revenue.</p>
+                </div>
+                <div class="btn-group">
+                    <button onclick="renderItemChart('quantity')" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-sort-numeric-up me-2"></i>Quantity
+                    </button>
+                    <button onclick="renderItemChart('revenue')" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-dollar-sign me-2"></i>Revenue
+                    </button>
+                    <button onclick="downloadChartImage('itemChart', 'best_selling_items')" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-download me-2"></i>Download
+                    </button>
+                </div>
+            </div>
+            <div class="chart-container" style="position: relative; height:400px; width:100%">
+                <canvas id="itemChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Revenue Distribution -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h3 class="card-title mb-1">📊 Revenue Share</h3>
+                            <p class="text-muted mb-0">Distribution of revenue across menu items.</p>
+                        </div>
+                        <button onclick="downloadChartImage('revenuePieChart', 'revenue_share')" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-download me-2"></i>Download
+                        </button>
+                    </div>
+                    <div class="chart-container" style="position: relative; height:400px; width:100%">
+                        <canvas id="revenuePieChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h3 class="card-title mb-1">📉 Quantity Share</h3>
+                            <p class="text-muted mb-0">Distribution of quantities sold across menu items.</p>
+                        </div>
+                        <button onclick="downloadChartImage('quantityPieChart', 'quantity_share')" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-download me-2"></i>Download
+                        </button>
+                    </div>
+                    <div class="chart-container" style="position: relative; height:400px; width:100%">
+                        <canvas id="quantityPieChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Chart Container Enhancements */
+.chart-container {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: all 0.3s ease;
+}
+
+.chart-container:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* Card Title Styling */
+.card-title {
+    color: #2c3e50;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+/* Button Group Styling */
+.btn-group .btn {
+    border-radius: 0.25rem !important;
+    margin: 0 0.25rem;
+    transition: all 0.2s ease;
+}
+
+.btn-group .btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .chart-container {
+        height: 300px !important;
+    }
+    
+    .btn-group {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .btn-group .btn {
+        flex: 1;
+        min-width: 120px;
+    }
+}
+</style>

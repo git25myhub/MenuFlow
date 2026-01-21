@@ -1,0 +1,397 @@
+{% extends "base.html" %}
+
+
+
+{% block content %}
+<!-- CSRF Token for AJAX requests -->
+<meta name="csrf-token" content="{{ csrf_token }}">
+<div class="container-fluid py-4">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        {% if current_user.logo_url %}
+                        <img src="{{ current_user.logo_url }}" 
+                             alt="{{ current_user.restaurant_name }} Logo" 
+                             class="rounded-circle me-3"
+                             style="width: 80px; height: 80px; object-fit: cover;">
+                        {% endif %}
+                        <div>
+                            <h2 class="mb-1">Welcome, {{ current_user.restaurant_name }}!</h2>
+                            <p class="mb-0">Manage your menu and track orders from here.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Pending Dine-in Orders</h5>
+                    <h2 class="card-text" id="pending-dine-in">{{ pending_dine_in }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Pending Delivery Orders</h5>
+                    <h2 class="card-text" id="pending-delivery">{{ pending_delivery }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Today's Revenue</h5>
+                    <h2 class="card-text" id="today-revenue">{{ today_revenue|format_price(currency) }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-secondary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Orders</h5>
+                    <h2 class="card-text" id="total-orders">0</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mb-4">
+        <div class="col-12">
+            {% if session.get('is_restaurant_manager') and getattr(current_user, 'role', None) == 'manager' %}
+            <a href="{{ url_for('analytics') }}" class="btn btn-info">
+                📊 View Analytics
+            </a>
+            <a href="{{ url_for('commission_dashboard') }}" class="btn btn-primary ms-2">
+                💰 Commission Dashboard
+            </a>
+            {% endif %}
+            <a href="{{ url_for('view_delivery_orders') }}" class="btn btn-success ms-2">
+                🚚 View Delivery Orders
+            </a>
+        </div>
+    </div>
+
+
+    <!-- Menu Management Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Menu Items</h5>
+                    <div class="text-muted small">
+                        
+                                                 Menu Items: <strong>{{ current_menu_item_count }}</strong> (Unlimited)
+                    </div>
+                    <a href="{{ url_for('add_menu_item') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Add New Item
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if menu_items %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Image</th>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                    <th>Price</th>
+                                    <th>Stock</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in menu_items %}
+                                <tr data-item-id="{{ item.id }}">
+                                    <td>
+                                        {% if item.image_url %}
+                                        <img src="{{ item.image_url }}" 
+                                             alt="{{ item.name }}" 
+                                             class="img-thumbnail"
+                                             style="width: 50px; height: 50px; object-fit: cover;">
+                                        {% else %}
+                                        <div class="bg-light rounded" style="width: 50px; height: 50px;"></div>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ item.name }}</td>
+                                    <td>{{ item.description|truncate(50) }}</td>
+                                    <td>{{ item.price|format_price(current_user.currency) }}</td>
+                                    <td><span id="stock-{{ item.id }}">{{ item.stock }}</span></td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{{ url_for('edit_menu_item', item_id=item.id) }}" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-outline-danger"
+                                                    onclick="confirmDelete({{ item.id }})">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-secondary edit-stock-btn"
+                                                data-item-id="{{ item.id }}">
+                                            <i class="fas fa-boxes"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-utensils fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No menu items yet. Add your first item to get started!</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR Code Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Your QR Code</h5>
+                </div>
+                <div class="card-body text-center">
+                    {% if current_user.qr_url %}
+                    <img src="{{ current_user.qr_url }}" 
+                         alt="Restaurant QR Code" 
+                         class="img-fluid mb-3"
+                         style="max-width: 200px;">
+                    <p class="text-muted">Scan this QR code to view your menu</p>
+                    <a href="{{ url_for('download_qr') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-download me-2"></i>Download QR Code
+                    </a>
+                    {% else %}
+                    <p class="text-muted">QR code not generated yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- Stock Modal -->
+<div class="modal fade" id="stockModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="stockModalLabel">Update Stock</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="stockForm">
+                    <input type="hidden" id="stock-item-id" name="item_id">
+                    <div class="mb-3">
+                        <label for="newStock" class="form-label">New Stock Quantity</label>
+                        <input type="number" class="form-control" id="newStock" name="new_stock" min="0" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="updateStock()">Update</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toastContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 1080;"></div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete this menu item?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="deleteConfirmBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stock Management Modal -->
+<div class="modal fade" id="stockModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="stockModalLabel">Update Stock</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="stockForm">
+                    <input type="hidden" id="stockItemId">
+                    <div class="mb-3">
+                        <label for="newStock" class="form-label">New Stock Level</label>
+                        <input type="number" class="form-control" id="newStock" min="0" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="updateStock()">Update Stock</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete(itemId) {
+    currentDeleteItemId = itemId;
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+}
+
+document.getElementById('deleteConfirmBtn').addEventListener('click', function() {
+    if (currentDeleteItemId) {
+        fetch(`/delete_menu_item/${currentDeleteItemId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content
+            },
+            body: JSON.stringify({})
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json()
+                    .catch(() => response.text())
+                    .then(text => {
+                        try {
+                            const errorData = JSON.parse(text);
+                            return { error: errorData.error || errorData.message || text || 'Request failed' };
+                        } catch (e) {
+                            return { error: text || 'Request failed' };
+                        }
+                    });
+            }
+            return response.json();
+        })
+        .then(data => {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+            modal.hide();
+            
+            if (data.success) {
+                // Remove the row from the table
+                const row = document.querySelector(`tr[data-item-id="${currentDeleteItemId}"]`);
+                if (row) {
+                    row.remove();
+                    showToast('success', data.message || 'Menu item deleted successfully!');
+                }
+            } else {
+                showToast('danger', data.error || data.message || 'Error deleting menu item');
+            }
+        })
+        .catch(error => {
+            showToast('danger', error.error || error.message || 'Error deleting menu item');
+            console.error('Delete error:', error);
+        });
+        
+        currentDeleteItemId = null;
+    }
+});
+
+// Initialize real-time updates
+function initializeDashboardUpdates() {
+    console.log('Initializing dashboard updates...');
+    const eventSource = new EventSource('/dashboard-updates');
+    
+    eventSource.onmessage = function(event) {
+        console.log('Received dashboard update:', event.data);
+        const data = JSON.parse(event.data);
+        
+        // Update counters
+        document.getElementById('pending-dine-in').textContent = data.pending_dine_in;
+        document.getElementById('pending-delivery').textContent = data.pending_delivery;
+        document.getElementById('today-revenue').textContent = data.today_revenue;
+        document.getElementById('total-orders').textContent = data.total_orders;
+    };
+    
+    eventSource.onerror = function(error) {
+        console.error('SSE Error:', error);
+        eventSource.close();
+        // Try to reconnect after 5 seconds
+        setTimeout(initializeDashboardUpdates, 5000);
+    };
+}
+
+// Function to mark order as delivered
+function markOrderDelivered(orderId) {
+    fetch(`/api/order/${orderId}/deliver`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success message
+            showToast('success', 'Order marked as delivered successfully!');
+        } else {
+            // Show error message
+            showToast('error', data.message || 'Failed to mark order as delivered');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        // Show error message
+        showToast('error', 'An error occurred while processing your request');
+    });
+}
+
+// Function to show toast messages
+function showToast(type, message) {
+    const toastId = type === 'success' ? 'successToast' : 'errorToast';
+    const messageId = type === 'success' ? 'toastMessage' : 'errorToastMessage';
+    
+    document.getElementById(messageId).textContent = message;
+    const toast = new bootstrap.Toast(document.getElementById(toastId));
+    toast.show();
+}
+
+// Initialize dashboard updates when document is ready
+document.addEventListener('DOMContentLoaded', function() {
+    initializeDashboardUpdates();
+});
+</script>
+
+<!-- Toast Notifications -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="successToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-success text-white">
+            <strong class="me-auto">Success</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="toastMessage"></div>
+    </div>
+    
+    <div id="errorToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-danger text-white">
+            <strong class="me-auto">Error</strong>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

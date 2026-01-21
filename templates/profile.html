@@ -1,0 +1,102 @@
+{% extends 'admin_panel_base.html' %}
+{% block admin_panel_content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Restaurant Profile</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('profile') }}" enctype="multipart/form-data">
+    {{ form.csrf_token }}
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="restaurant_name" class="form-label">Restaurant Name</label>
+                                    {{ form.restaurant_name(class="form-control", id="restaurant_name", value=current_user.restaurant_name) }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="currency" class="form-label">Currency</label>
+                                    {{ form.currency(class="form-control", id="currency", value=current_user.currency) }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="restaurant_description" class="form-label">Restaurant Description</label>
+                            {{ form.restaurant_description(class="form-control", id="restaurant_description", value=current_user.restaurant_description) }}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="restaurant_address" class="form-label">Restaurant Address</label>
+                                    {{ form.restaurant_address(class="form-control", id="restaurant_address", value=current_user.restaurant_address) }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="opening_hours" class="form-label">Opening Hours</label>
+                                    {{ form.opening_hours(class="form-control", id="opening_hours", value=current_user.opening_hours) }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="website" class="form-label">Website</label>
+                                    {{ form.website(class="form-control", id="website", value=current_user.website) }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="social_media" class="form-label">Social Media Links (JSON)</label>
+                                    {{ form.social_media(class="form-control", id="social_media", rows=3, value=current_user.social_media) }}
+                                    <div class="form-text">Enter as JSON, e.g. {"facebook": "url", "instagram": "url"}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contact Information -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="contact_phone" class="form-label">Contact Phone Number</label>
+                                    {{ form.contact_phone(class="form-control", id="contact_phone", type="tel", value=current_user.contact_phone) }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="help_contact" class="form-label">Help Contact Number</label>
+                                    {{ form.help_contact(class="form-control", id="help_contact", type="tel", value=current_user.help_contact) }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="logo" class="form-label">Restaurant Logo</label>
+                            <div class="d-flex align-items-center">
+                                {% if current_user.logo_url %}
+                                    <img src="{{ current_user.logo_url }}" alt="Restaurant Logo" class="img-thumbnail" style="max-height: 100px;">
+                                {% endif %}
+                                {{ form.logo(class="form-control", id="logo", type="file", accept="image/*") }}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary ms-2">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

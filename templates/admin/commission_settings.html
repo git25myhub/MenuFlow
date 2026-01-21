@@ -1,0 +1,280 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Commission Settings - Admin{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <i class="fas fa-cog text-primary"></i>
+                Commission Settings
+            </h2>
+        </div>
+    </div>
+
+    <!-- Commission Configuration Form -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-edit"></i>
+                        Configure Commission for Restaurant
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="restaurant_id">Restaurant</label>
+                                    <select class="form-control" id="restaurant_id" name="restaurant_id" required>
+                                        <option value="">Select Restaurant</option>
+                                        {% for restaurant in restaurants %}
+                                        <option value="{{ restaurant.id }}">{{ restaurant.restaurant_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="commission_type">Commission Type</label>
+                                    <select class="form-control" id="commission_type" name="commission_type" required>
+                                        <option value="percentage">Percentage</option>
+                                        <option value="fixed">Fixed Amount</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="commission_rate">Commission Rate</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="commission_rate" name="commission_rate" 
+                                               step="0.1" min="0" required>
+                                        <div class="input-group-append">
+                                            <span class="input-group-text" id="rate_unit">%</span>
+                                        </div>
+                                    </div>
+                                    <small class="form-text text-muted">
+                                        <span id="rate_help">Enter percentage (e.g., 5.0 for 5%)</span>
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="minimum_order_amount">Minimum Order Amount (KES)</label>
+                                    <input type="number" class="form-control" id="minimum_order_amount" 
+                                           name="minimum_order_amount" step="0.01" min="0" value="50.0">
+                                    <small class="form-text text-muted">No commission on orders below this amount</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="maximum_commission">Maximum Commission (KES)</label>
+                                    <input type="number" class="form-control" id="maximum_commission" 
+                                           name="maximum_commission" step="0.01" min="0" value="500.0">
+                                    <small class="form-text text-muted">Cap on commission amount per order</small>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            Save Configuration
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Commission Configurations -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list"></i>
+                        Current Commission Configurations
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Restaurant</th>
+                                    <th>Type</th>
+                                    <th>Rate</th>
+                                    <th>Min Order</th>
+                                    <th>Max Commission</th>
+                                    <th>Status</th>
+                                    <th>Last Updated</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for restaurant in restaurants %}
+                                {% set config = commission_configs.get(restaurant.id) %}
+                                <tr>
+                                    <td>{{ restaurant.restaurant_name }}</td>
+                                    <td>
+                                        {% if config %}
+                                        <span class="badge badge-{{ 'primary' if config.commission_type == 'percentage' else 'secondary' }}">
+                                            {{ config.commission_type.title() }}
+                                        </span>
+                                        {% else %}
+                                        <span class="badge badge-warning">Not Set</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if config %}
+                                        {% if config.commission_type == 'percentage' %}
+                                        {{ "%.1f"|format(config.commission_rate) }}%
+                                        {% else %}
+                                        KES {{ "%.2f"|format(config.commission_rate) }}
+                                        {% endif %}
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if config %}
+                                        KES {{ "%.2f"|format(config.minimum_order_amount) }}
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if config and config.maximum_commission %}
+                                        KES {{ "%.2f"|format(config.maximum_commission) }}
+                                        {% else %}
+                                        <span class="text-muted">No limit</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if config %}
+                                        {% if config.is_active %}
+                                        <span class="badge badge-success">Active</span>
+                                        {% else %}
+                                        <span class="badge badge-danger">Inactive</span>
+                                        {% endif %}
+                                        {% else %}
+                                        <span class="badge badge-warning">Default</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if config %}
+                                        {{ config.updated_at.strftime('%d/%m/%Y %H:%M') }}
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Commission Information -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-info">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle"></i>
+                        Commission Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Commission Types:</h6>
+                            <ul>
+                                <li><strong>Percentage:</strong> Commission calculated as a percentage of order value</li>
+                                <li><strong>Fixed Amount:</strong> Fixed commission amount per order regardless of value</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Commission Rules:</h6>
+                            <ul>
+                                <li>Minimum order amount: No commission on orders below this threshold</li>
+                                <li>Maximum commission: Cap on commission amount per order</li>
+                                <li>Commission is calculated when order is marked as paid</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const commissionType = document.getElementById('commission_type');
+    const commissionRate = document.getElementById('commission_rate');
+    const rateUnit = document.getElementById('rate_unit');
+    const rateHelp = document.getElementById('rate_help');
+    
+    function updateRateDisplay() {
+        if (commissionType.value === 'percentage') {
+            rateUnit.textContent = '%';
+            rateHelp.textContent = 'Enter percentage (e.g., 5.0 for 5%)';
+            commissionRate.placeholder = '5.0';
+        } else {
+            rateUnit.textContent = 'KES';
+            rateHelp.textContent = 'Enter fixed amount in KES';
+            commissionRate.placeholder = '20.0';
+        }
+    }
+    
+    commissionType.addEventListener('change', updateRateDisplay);
+    updateRateDisplay();
+    
+    // Auto-fill form when restaurant is selected
+    const restaurantSelect = document.getElementById('restaurant_id');
+    restaurantSelect.addEventListener('change', function() {
+        const restaurantId = this.value;
+        if (restaurantId) {
+            // You could add AJAX here to fetch current config and auto-fill the form
+            // For now, just reset the form
+            document.querySelector('form').reset();
+            updateRateDisplay();
+        }
+    });
+});
+</script>
+
+<style>
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+</style>
+{% endblock %} 

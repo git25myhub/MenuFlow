@@ -1,0 +1,215 @@
+{% extends "admin/admin_base.html" %}
+
+{% block head %}
+{{ super() }}
+<meta name="csrf-token" content="{{ csrf_token }}">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Create New Notification</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}"/>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="title" class="form-label">Title *</label>
+                                    <input type="text" class="form-control" id="title" name="title" required>
+                                    <div class="form-text">A brief title for the notification</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="type" class="form-label">Type</label>
+                                    <select class="form-select" id="type" name="type">
+                                        <option value="info">Info</option>
+                                        <option value="warning">Warning</option>
+                                        <option value="success">Success</option>
+                                        <option value="error">Error</option>
+                                        <option value="update">System Update</option>
+                                        <option value="feature">New Feature</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="priority" class="form-label">Priority</label>
+                                    <select class="form-select" id="priority" name="priority">
+                                        <option value="low">Low</option>
+                                        <option value="normal" selected>Normal</option>
+                                        <option value="high">High</option>
+                                        <option value="urgent">Urgent</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="expires_in_days" class="form-label">Expires in (days)</label>
+                                    <input type="number" class="form-control" id="expires_in_days" name="expires_in_days" min="1" max="365">
+                                    <div class="form-text">Leave empty for no expiration</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="message" class="form-label">Message *</label>
+                            <textarea class="form-control" id="message" name="message" rows="4" required></textarea>
+                            <div class="form-text">Detailed message content for the notification</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="is_global" name="is_global">
+                                <label class="form-check-label" for="is_global">
+                                    Global notification (sent to all restaurants)
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3" id="target-restaurant-group" style="display: none;">
+                            <label for="target_restaurant_id" class="form-label">Target Restaurant</label>
+                            <select class="form-select" id="target_restaurant_id" name="target_restaurant_id">
+                                <option value="">Select a restaurant</option>
+                                {% for restaurant in restaurants %}
+                                <option value="{{ restaurant.id }}">{{ restaurant.restaurant_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('admin_notifications') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Notifications
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Create Notification
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Preview Section -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Preview</h5>
+                </div>
+                <div class="card-body">
+                    <div id="notification-preview" class="border rounded p-3 bg-light">
+                        <div class="text-center text-muted">
+                            <i class="fas fa-eye fa-2x mb-2"></i>
+                            <div>Notification preview will appear here</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const isGlobalCheckbox = document.getElementById('is_global');
+    const targetRestaurantGroup = document.getElementById('target-restaurant-group');
+    const targetRestaurantSelect = document.getElementById('target_restaurant_id');
+    
+    // Toggle target restaurant field based on global checkbox
+    isGlobalCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+            targetRestaurantGroup.style.display = 'none';
+            targetRestaurantSelect.required = false;
+        } else {
+            targetRestaurantGroup.style.display = 'block';
+            targetRestaurantSelect.required = true;
+        }
+        updatePreview();
+    });
+    
+    // Update preview when form fields change
+    const formFields = ['title', 'message', 'type', 'priority'];
+    formFields.forEach(fieldName => {
+        const field = document.getElementById(fieldName);
+        if (field) {
+            field.addEventListener('input', updatePreview);
+        }
+    });
+    
+    function updatePreview() {
+        const title = document.getElementById('title').value || 'Notification Title';
+        const message = document.getElementById('message').value || 'Notification message content...';
+        const type = document.getElementById('type').value;
+        const priority = document.getElementById('priority').value;
+        const isGlobal = document.getElementById('is_global').checked;
+        
+        const typeClass = getTypeClass(type);
+        const priorityClass = getPriorityClass(priority);
+        const typeIcon = getTypeIcon(type);
+        
+        const preview = document.getElementById('notification-preview');
+        preview.innerHTML = `
+            <div class="d-flex align-items-start">
+                <div class="me-2">
+                    <i class="fas ${typeIcon} ${typeClass}"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <h6 class="mb-1">${title}</h6>
+                        <div>
+                            <span class="badge ${priorityClass} me-1">${priority}</span>
+                            <span class="badge ${isGlobal ? 'bg-success' : 'bg-info'}">${isGlobal ? 'Global' : 'Targeted'}</span>
+                        </div>
+                    </div>
+                    <p class="mb-1 text-muted">${message}</p>
+                    <small class="text-muted">Created just now</small>
+                </div>
+            </div>
+        `;
+    }
+    
+    function getTypeClass(type) {
+        const typeClasses = {
+            'info': 'text-info',
+            'warning': 'text-warning',
+            'success': 'text-success',
+            'error': 'text-danger',
+            'update': 'text-primary',
+            'feature': 'text-purple'
+        };
+        return typeClasses[type] || 'text-info';
+    }
+    
+    function getPriorityClass(priority) {
+        const priorityClasses = {
+            'low': 'bg-secondary',
+            'normal': 'bg-primary',
+            'high': 'bg-warning',
+            'urgent': 'bg-danger'
+        };
+        return priorityClasses[priority] || 'bg-primary';
+    }
+    
+    function getTypeIcon(type) {
+        const typeIcons = {
+            'info': 'fa-info-circle',
+            'warning': 'fa-exclamation-triangle',
+            'success': 'fa-check-circle',
+            'error': 'fa-times-circle',
+            'update': 'fa-sync-alt',
+            'feature': 'fa-star'
+        };
+        return typeIcons[type] || 'fa-bell';
+    }
+    
+    // Initialize preview
+    updatePreview();
+});
+</script>
+{% endblock %}

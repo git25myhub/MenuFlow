@@ -1,0 +1,35 @@
+{% extends "restaurant_menu_layout.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="text-center">Payment Details</h3>
+                </div>
+                <div class="card-body">
+                    <div class="order-summary mb-4">
+                        <h4>Order Summary</h4>
+                        <p><strong>Order ID:</strong> #{{ order.id }}</p>
+                        <p><strong>Total Amount:</strong> {{ order.total_amount|format_price(order.user.currency) }}</p>
+                    </div>
+
+                    <form method="POST">
+                        <div class="form-group">
+                            <label for="phone_number">M-Pesa Phone Number</label>
+                            <input type="tel" class="form-control" id="phone_number" name="phone_number" 
+                                   placeholder="Enter your M-Pesa phone number" required
+                                   pattern="^(?:254|\+254|0)?([7-9]{1}[0-9]{8})$">
+                            <small class="form-text text-muted">Enter the phone number registered with M-Pesa (e.g., 07XXXXXXXX)</small>
+                        </div>
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-primary">Pay Now</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
