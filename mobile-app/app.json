@@ -41,7 +41,8 @@
           }
         }
       ],
-      "expo-font"
+      "expo-font",
+      "expo-secure-store"
     ],
     "extra": {
       "apiUrl": "https://bluespace-restaurants.onrender.com/api/v1",
@@ -51,6 +52,7 @@
     },
     "updates": {
       "enabled": false,
+      "checkAutomatically": "NEVER",
       "fallbackToCacheTimeout": 0
     }
   }
