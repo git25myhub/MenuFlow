@@ -4,13 +4,18 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
+  Image,
 } from 'react-native';
+import { colors } from '../../theme';
 
 export default function LandingScreen({ navigation }) {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>BlueSpace Restaurants</Text>
-      <Text style={styles.subtitle}>Order food or manage your restaurant</Text>
+      <View style={styles.hero}>
+        <Text style={styles.brandIcon}>🍽️</Text>
+        <Text style={styles.title}>BlueSpace Restaurants</Text>
+        <Text style={styles.subtitle}>Order food or manage your restaurant</Text>
+      </View>
 
       <TouchableOpacity
         style={styles.primaryButton}
@@ -41,27 +46,39 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: 24,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#2d3748',
+  },
+  hero: {
+    alignItems: 'center',
+    marginBottom: 48,
+  },
+  brandIcon: {
+    fontSize: 64,
+    marginBottom: 16,
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 10,
-    color: '#e67e22',
+    marginBottom: 12,
+    color: '#fff',
   },
   subtitle: {
-    fontSize: 18,
+    fontSize: 16,
     textAlign: 'center',
-    marginBottom: 48,
-    color: '#666',
+    color: 'rgba(255,255,255,0.8)',
   },
   primaryButton: {
-    backgroundColor: '#e67e22',
+    backgroundColor: colors.authPrimary,
     padding: 18,
-    borderRadius: 8,
+    borderRadius: 12,
     alignItems: 'center',
     marginBottom: 16,
+    shadowColor: colors.authPrimary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
   },
   primaryButtonText: {
     color: '#fff',
@@ -69,16 +86,16 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   secondaryButton: {
-    backgroundColor: '#fff',
+    backgroundColor: 'transparent',
     padding: 18,
-    borderRadius: 8,
+    borderRadius: 12,
     alignItems: 'center',
     marginBottom: 24,
     borderWidth: 2,
-    borderColor: '#e67e22',
+    borderColor: colors.authPrimary,
   },
   secondaryButtonText: {
-    color: '#e67e22',
+    color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
   },
@@ -86,7 +103,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   linkText: {
-    color: '#e67e22',
+    color: colors.authPrimary,
     fontSize: 16,
+    fontWeight: '500',
   },
 });

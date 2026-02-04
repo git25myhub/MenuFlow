@@ -15,6 +15,7 @@ import { ordersAPI } from '../../services/api';
 export default function CheckoutScreen({ navigation }) {
   const { cart, restaurant, total, clearCart } = useCart();
   const [orderType, setOrderType] = useState('dine_in');
+  const [tableNumber, setTableNumber] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState('');
@@ -22,17 +23,24 @@ export default function CheckoutScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
 
   const handlePlaceOrder = async () => {
-    if (!customerName.trim()) {
-      Alert.alert('Error', 'Please enter your name');
-      return;
-    }
-    if (!customerPhone.trim()) {
-      Alert.alert('Error', 'Please enter your phone number');
-      return;
-    }
-    if (orderType === 'delivery' && !deliveryAddress.trim()) {
-      Alert.alert('Error', 'Please enter delivery address');
-      return;
+    if (orderType === 'dine_in') {
+      if (!tableNumber.trim()) {
+        Alert.alert('Error', 'Please enter your table number');
+        return;
+      }
+    } else {
+      if (!customerName.trim()) {
+        Alert.alert('Error', 'Please enter your name');
+        return;
+      }
+      if (!customerPhone.trim()) {
+        Alert.alert('Error', 'Please enter your phone number');
+        return;
+      }
+      if (!deliveryAddress.trim()) {
+        Alert.alert('Error', 'Please enter delivery address');
+        return;
+      }
     }
 
     setLoading(true);
@@ -45,8 +53,9 @@ export default function CheckoutScreen({ navigation }) {
           menu_item_id: item.id,
           quantity: item.quantity,
         })),
-        customer_name: customerName.trim(),
-        customer_phone: customerPhone.trim(),
+        table_number: orderType === 'dine_in' ? tableNumber.trim() : null,
+        customer_name: orderType === 'delivery' ? customerName.trim() : null,
+        customer_phone: orderType === 'delivery' ? customerPhone.trim() : null,
         delivery_address: orderType === 'delivery' ? deliveryAddress.trim() : null,
         special_instructions: specialInstructions.trim() || null,
       };
@@ -100,28 +109,40 @@ export default function CheckoutScreen({ navigation }) {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Your Details</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Your name *"
-          value={customerName}
-          onChangeText={setCustomerName}
-          autoCapitalize="words"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Phone number *"
-          value={customerPhone}
-          onChangeText={setCustomerPhone}
-          keyboardType="phone-pad"
-        />
-        {orderType === 'delivery' && (
+        <Text style={styles.sectionTitle}>
+          {orderType === 'dine_in' ? 'Table Details' : 'Your Details'}
+        </Text>
+        {orderType === 'dine_in' ? (
           <TextInput
             style={styles.input}
-            placeholder="Delivery address *"
-            value={deliveryAddress}
-            onChangeText={setDeliveryAddress}
+            placeholder="Table number *"
+            value={tableNumber}
+            onChangeText={setTableNumber}
+            keyboardType="number-pad"
           />
+        ) : (
+          <>
+            <TextInput
+              style={styles.input}
+              placeholder="Your name *"
+              value={customerName}
+              onChangeText={setCustomerName}
+              autoCapitalize="words"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Phone number *"
+              value={customerPhone}
+              onChangeText={setCustomerPhone}
+              keyboardType="phone-pad"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Delivery address *"
+              value={deliveryAddress}
+              onChangeText={setDeliveryAddress}
+            />
+          </>
         )}
         <TextInput
           style={[styles.input, styles.textArea]}

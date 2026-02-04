@@ -90,6 +90,7 @@ def create_guest_order():
         order_type=data['order_type'],
         total_amount=data['total'],
         status='new',
+        table_number=data.get('table_number'),
         special_instructions=data.get('special_instructions'),
         delivery_address=data.get('delivery_address'),
         customer_name=data.get('customer_name'),
@@ -179,7 +180,7 @@ def create_order():
             menu_item_id=item_data['menu_item_id'],
             quantity=item_data['quantity'],
             price=menu_item.price,
-            item_name=menu_item.name
+            name=menu_item.name
         )
         db.session.add(order_item)
         
@@ -262,7 +263,8 @@ def order_to_dict(order, include_items=False):
         'id': order.id,
         'restaurant_id': order.restaurant_id,
         'order_type': order.order_type,
-        'total': float(order.total) if order.total else 0.0,
+        'table_number': order.table_number,
+        'total': float(order.total_amount) if order.total_amount else 0.0,
         'status': order.status,
         'special_instructions': order.special_instructions,
         'delivery_address': order.delivery_address,
@@ -273,13 +275,14 @@ def order_to_dict(order, include_items=False):
     }
     
     if include_items:
+        items_rel = getattr(order, 'order_items', []) or getattr(order, 'items', [])
         result['items'] = [{
             'id': item.id,
             'menu_item_id': item.menu_item_id,
-            'item_name': item.item_name,
+            'item_name': getattr(item, 'name', None) or getattr(item, 'item_name', None),
             'quantity': item.quantity,
             'price': float(item.price) if item.price else 0.0
-        } for item in order.items]
+        } for item in items_rel]
     
     return result
 
