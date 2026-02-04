@@ -1,0 +1,1 @@
+# BlueSpace Restaurants test suite

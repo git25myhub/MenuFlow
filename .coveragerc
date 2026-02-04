@@ -1,0 +1,14 @@
+[run]
+source = .
+omit =
+    tests/*
+    migrations/*
+    venv/*
+    env/*
+    *.pyc
+    hardware_notifier.py
+    hardware_web_interface.py
+    hardware_test_no_display.py
+    rpi_setup.py
+    quick_test.py
+    quick_display_test.py

@@ -39,8 +39,9 @@ jobs:
     
     - name: Run tests
       env:
-        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db?sslmode=disable
         SECRET_KEY: test-secret-key
+        SIMULATION_MODE: "true"
       run: |
         pytest tests/ -v --cov=. --cov-report=xml
     
