@@ -16,25 +16,14 @@ export const AuthProvider = ({ children }) => {
     try {
       const token = await tokenManager.getToken();
       if (token) {
-        console.log('Checking auth with existing token...');
         const response = await authAPI.getCurrentUser();
         if (response.success) {
-          console.log('Auth check successful, user:', response.user);
           setUser(response.user);
         } else {
-          console.log('Auth check failed, removing token');
           await tokenManager.removeToken();
         }
-      } else {
-        console.log('No token found, user not logged in');
       }
     } catch (error) {
-      console.error('Auth check failed:', error);
-      console.error('Error details:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-      });
       await tokenManager.removeToken();
     } finally {
       setLoading(false);
@@ -43,25 +32,14 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      console.log('Attempting login for:', email);
       const response = await authAPI.login(email, password);
-      console.log('Login response:', response);
       if (response.success) {
-        console.log('Login successful, user:', response.user);
         setUser(response.user);
         return { success: true };
       } else {
-        console.log('Login failed:', response.error);
         return { success: false, error: response.error };
       }
     } catch (error) {
-      console.error('Login error:', error);
-      console.error('Error details:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-        code: error.code,
-      });
       return {
         success: false,
         error: error.response?.data?.error || error.message || 'Login failed. Please check your internet connection.',
@@ -91,7 +69,7 @@ export const AuthProvider = ({ children }) => {
       await authAPI.logout();
       setUser(null);
     } catch (error) {
-      console.error('Logout error:', error);
+      setUser(null);
     }
   };
 

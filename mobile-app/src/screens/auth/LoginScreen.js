@@ -33,7 +33,13 @@ export default function LoginScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>BlueSpace Restaurants</Text>
+      <TouchableOpacity
+        onPress={() => navigation.navigate('Landing')}
+        style={styles.backButton}
+      >
+        <Text style={styles.backText}>← Back</Text>
+      </TouchableOpacity>
+      <Text style={styles.title}>Staff Login</Text>
       <Text style={styles.subtitle}>Restaurant Management</Text>
 
       <View style={styles.form}>
@@ -87,6 +93,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 20,
     backgroundColor: '#f5f5f5',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 48,
+    left: 20,
+    zIndex: 1,
+  },
+  backText: {
+    color: '#e67e22',
+    fontSize: 16,
   },
   title: {
     fontSize: 32,

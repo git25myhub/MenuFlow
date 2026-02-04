@@ -8,6 +8,35 @@ from models import User, Restaurant
 from extensions import db
 
 
+@api_bp.route('/restaurants', methods=['GET'])
+def list_restaurants():
+    """List all restaurants (public - for customer app)"""
+    restaurants = User.query.filter(
+        User.restaurant_id.isnot(None),
+        User.restaurant_name != 'System Administrator'
+    ).all()
+    
+    # Deduplicate by restaurant_id
+    seen = set()
+    result = []
+    for user in restaurants:
+        rid = user.restaurant_id or user.id
+        if rid not in seen:
+            seen.add(rid)
+            result.append({
+                'id': rid,
+                'name': user.restaurant_name,
+                'logo_url': user.logo_url,
+                'description': user.restaurant_description,
+                'currency': user.currency or 'USD',
+            })
+    
+    return jsonify({
+        'success': True,
+        'restaurants': result
+    }), 200
+
+
 @api_bp.route('/restaurants/me', methods=['GET'])
 @require_auth
 def get_my_restaurant():

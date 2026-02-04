@@ -4,11 +4,14 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
+import { CartProvider } from './src/context/CartContext';
 import { APIProvider } from './src/services/api';
 
 // Screens
+import LandingScreen from './src/screens/auth/LandingScreen';
 import LoginScreen from './src/screens/auth/LoginScreen';
 import RegisterScreen from './src/screens/auth/RegisterScreen';
+import LoadingScreen from './src/components/LoadingScreen';
 import DashboardScreen from './src/screens/restaurant/DashboardScreen';
 import OrdersScreen from './src/screens/restaurant/OrdersScreen';
 import MenuScreen from './src/screens/restaurant/MenuScreen';
@@ -48,7 +51,7 @@ function AppNavigator() {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return null; // Show loading screen
+    return <LoadingScreen />;
   }
 
   return (
@@ -62,6 +65,7 @@ function AppNavigator() {
           </>
         ) : (
           <>
+            <Stack.Screen name="Landing" component={LandingScreen} />
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Register" component={RegisterScreen} />
             <Stack.Screen name="CustomerMenu" component={CustomerMenuScreen} />
@@ -79,8 +83,10 @@ export default function App() {
   return (
     <APIProvider>
       <AuthProvider>
-        <AppNavigator />
-        <StatusBar style="auto" />
+        <CartProvider>
+          <AppNavigator />
+          <StatusBar style="auto" />
+        </CartProvider>
       </AuthProvider>
     </APIProvider>
   );

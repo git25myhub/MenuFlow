@@ -7,9 +7,9 @@ const API_BASE_URL = __DEV__
   ? Constants.expoConfig?.extra?.apiUrl || 'http://localhost:5000/api/v1'
   : Constants.expoConfig?.extra?.apiUrl || 'https://bluespace-restaurants.onrender.com/api/v1';
 
-// Log API configuration for debugging
-console.log('API Base URL:', API_BASE_URL);
-console.log('Is Dev Mode:', __DEV__);
+if (__DEV__) {
+  console.log('API Base URL:', API_BASE_URL);
+}
 
 // Create axios instance
 const api = axios.create({
@@ -142,6 +142,16 @@ export const ordersAPI = {
     return response.data;
   },
 
+  createGuestOrder: async (orderData) => {
+    const response = await api.post('/orders/guest', orderData);
+    return response.data;
+  },
+
+  trackOrder: async (orderId) => {
+    const response = await api.get(`/orders/${orderId}/track`);
+    return response.data;
+  },
+
   updateOrderStatus: async (orderId, status) => {
     const response = await api.put(`/orders/${orderId}/status`, { status });
     return response.data;
@@ -210,6 +220,11 @@ export const paymentsAPI = {
 };
 
 export const restaurantsAPI = {
+  listRestaurants: async () => {
+    const response = await api.get('/restaurants');
+    return response.data;
+  },
+
   getMyRestaurant: async () => {
     const response = await api.get('/restaurants/me');
     return response.data;

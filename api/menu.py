@@ -20,7 +20,10 @@ def get_menu_items():
     if not restaurant_id:
         return jsonify({'error': 'restaurant_id is required'}), 400
     
-    query = MenuItem.query.filter_by(restaurant_id=restaurant_id, is_available=True)
+    # MenuItem uses user_id (restaurant owner); restaurant_id maps to user_id in this schema
+    query = MenuItem.query.filter_by(user_id=restaurant_id)
+    if hasattr(MenuItem, 'is_available'):
+        query = query.filter_by(is_available=True)
     
     if category_id:
         query = query.filter_by(category_id=category_id)
@@ -150,7 +153,10 @@ def get_categories():
     if not restaurant_id:
         return jsonify({'error': 'restaurant_id is required'}), 400
     
-    categories = Category.query.filter_by(restaurant_id=restaurant_id).order_by(Category.name).all()
+    if hasattr(Category, 'restaurant_id'):
+        categories = Category.query.filter_by(restaurant_id=restaurant_id).order_by(Category.name).all()
+    else:
+        categories = Category.query.order_by(Category.name).all()
     
     return jsonify({
         'success': True,
@@ -162,14 +168,14 @@ def menu_item_to_dict(item):
     """Convert MenuItem model to dictionary"""
     return {
         'id': item.id,
-        'restaurant_id': item.restaurant_id,
+        'restaurant_id': getattr(item, 'restaurant_id', item.user_id),
         'name': item.name,
         'description': item.description,
         'price': float(item.price) if item.price else 0.0,
         'category_id': item.category_id,
         'image_url': item.image_url,
-        'is_available': item.is_available,
-        'stock': item.stock
+        'is_available': getattr(item, 'is_available', True),
+        'stock': getattr(item, 'stock', 0)
     }
 
 
@@ -177,7 +183,7 @@ def category_to_dict(category):
     """Convert Category model to dictionary"""
     return {
         'id': category.id,
-        'restaurant_id': category.restaurant_id,
+        'restaurant_id': getattr(category, 'restaurant_id', None),
         'name': category.name,
         'description': category.description
     }
