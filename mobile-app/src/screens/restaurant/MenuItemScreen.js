@@ -33,6 +33,7 @@ export default function MenuItemScreen({ route, navigation }) {
     if (isEdit) {
       loadItem();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [itemId]);
 
   const loadCategories = async () => {

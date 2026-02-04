@@ -9,7 +9,6 @@ import {
   ActivityIndicator,
   Image,
   ScrollView,
-  Dimensions,
 } from 'react-native';
 import { useCart } from '../../context/CartContext';
 import { menuAPI, restaurantsAPI } from '../../services/api';
@@ -61,6 +60,7 @@ export default function CustomerMenuScreen({ navigation }) {
     } else {
       loadMenu();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectingRestaurant, restaurant?.id]);
 
   const loadRestaurants = async () => {
@@ -105,6 +105,7 @@ export default function CustomerMenuScreen({ navigation }) {
     if (restaurant?.id && !selectingRestaurant) {
       loadMenu();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory]);
 
   const onRefresh = () => {

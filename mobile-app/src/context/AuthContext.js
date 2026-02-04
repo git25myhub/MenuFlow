@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }) => {
           await tokenManager.removeToken();
         }
       }
-    } catch (error) {
+    } catch (_error) {
       await tokenManager.removeToken();
     } finally {
       setLoading(false);
@@ -68,7 +68,7 @@ export const AuthProvider = ({ children }) => {
     try {
       await authAPI.logout();
       setUser(null);
-    } catch (error) {
+    } catch (_error) {
       setUser(null);
     }
   };

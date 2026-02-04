@@ -43,6 +43,7 @@ export default function OrderTrackingScreen({ route, navigation }) {
 
   useEffect(() => {
     loadOrder();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);
 
   const onRefresh = () => {

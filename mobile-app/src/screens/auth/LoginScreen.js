@@ -7,13 +7,12 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
-  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
-import { colors, borderRadius } from '../../theme';
+import { colors } from '../../theme';
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');

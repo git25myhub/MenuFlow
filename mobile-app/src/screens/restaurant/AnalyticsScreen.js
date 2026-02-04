@@ -9,19 +9,18 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { analyticsAPI } from '../../services/api';
-import { useAuth } from '../../context/AuthContext';
 import { colors } from '../../theme';
 
 export default function AnalyticsScreen() {
-  const { user } = useAuth();
   const [stats, setStats] = useState(null);
-  const [revenueStats, setRevenueStats] = useState(null);
+  const [, setRevenueStats] = useState(null);
   const [days, setDays] = useState(30);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     loadAnalytics();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [days]);
 
   const loadAnalytics = async () => {

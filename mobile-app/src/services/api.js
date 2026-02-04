@@ -1,3 +1,4 @@
+import React, { createContext, useContext } from 'react';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
@@ -258,8 +259,6 @@ export const analyticsAPI = {
 };
 
 // API Provider Context
-import React, { createContext, useContext } from 'react';
-
 const APIContext = createContext({
   api,
   authAPI,

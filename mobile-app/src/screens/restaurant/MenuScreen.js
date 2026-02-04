@@ -25,6 +25,7 @@ export default function MenuScreen({ navigation }) {
 
   useEffect(() => {
     loadMenu();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadMenu = async () => {
