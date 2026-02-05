@@ -15,13 +15,10 @@ if __name__ == '__main__':
         except ImportError:
             pass  # Gevent not available
     else:
-        # On Windows, use eventlet if available (Flask-SocketIO will handle it)
-        # Note: eventlet can cause SSL issues with psycopg2, so we skip it for CLI commands
-        try:
-            import eventlet
-            eventlet.monkey_patch()
-        except ImportError:
-            pass  # Eventlet not available, SocketIO will use threading mode
+        # On Windows: skip eventlet monkey patching to avoid greendns/dnspython conflict
+        # (causes "udp() got unexpected keyword argument 'ignore_errors'" and email DNS lookup failures).
+        # Flask-SocketIO will use threading mode instead.
+        pass
 
 from flask import Flask, render_template, redirect, url_for, request, flash, send_from_directory, jsonify, session, Response, stream_with_context, abort, make_response, send_file
 from sqlalchemy import select
@@ -3572,20 +3569,36 @@ def commission_dashboard():
 
 @app.route('/admin/commission-settings', methods=['GET', 'POST'])
 @login_required
+@admin_panel_required
 def commission_settings():
     """Admin interface to configure commission rates"""
+    if not current_user.is_admin:
+        flash('Access denied. Admin only.', 'error')
+        return redirect(url_for('admin_dashboard'))
     try:
-        # Get all restaurants
-        restaurants = User.query.filter_by(is_admin=False).all()
+        # Get all restaurants (non-admin users with restaurant_name)
+        restaurants = db.session.execute(
+            db.select(User).where(
+                User.is_admin == False,
+                User.restaurant_name != 'System Administrator'
+            ).order_by(User.restaurant_name)
+        ).scalars().all()
         
         if request.method == 'POST':
             restaurant_id = request.form.get('restaurant_id', type=int)
-            commission_type = request.form.get('commission_type')
+            commission_type = request.form.get('commission_type', 'percentage')
             commission_rate = request.form.get('commission_rate', type=float)
-            minimum_order_amount = request.form.get('minimum_order_amount', type=float)
-            maximum_commission = request.form.get('maximum_commission', type=float)
+            minimum_order_amount = request.form.get('minimum_order_amount', type=float) or 0.0
+            maximum_commission_raw = request.form.get('maximum_commission', type=float)
+            maximum_commission = maximum_commission_raw if (maximum_commission_raw is not None and maximum_commission_raw > 0) else None
             
-            if restaurant_id and commission_rate is not None:
+            if not restaurant_id:
+                flash('Please select a restaurant.', 'error')
+            elif commission_rate is None or commission_rate < 0:
+                flash('Please enter a valid commission rate.', 'error')
+            elif commission_type == 'percentage' and commission_rate > 100:
+                flash('Percentage cannot exceed 100%.', 'error')
+            else:
                 success = CommissionService.update_commission_config(
                     restaurant_id, commission_type, commission_rate,
                     minimum_order_amount, maximum_commission
@@ -3598,15 +3611,24 @@ def commission_settings():
                 
                 return redirect(url_for('commission_settings'))
         
-        # Get current commission configs
+        # Get current commission configs (display only, do not create)
         commission_configs = {}
+        configs_for_js = {}
         for restaurant in restaurants:
-            config = CommissionService.get_commission_config(restaurant.id)
+            config = CommissionService.get_commission_config_for_display(restaurant.id)
             commission_configs[restaurant.id] = config
+            if config:
+                configs_for_js[restaurant.id] = {
+                    'commission_type': config.commission_type,
+                    'commission_rate': config.commission_rate,
+                    'minimum_order_amount': config.minimum_order_amount or 0,
+                    'maximum_commission': config.maximum_commission
+                }
         
         return render_template('admin/commission_settings.html', 
             restaurants=restaurants,
-            commission_configs=commission_configs
+            commission_configs=commission_configs,
+            configs_for_js=configs_for_js
         )
     except Exception as e:
         app.logger.error(f"Error in commission settings: {str(e)}")

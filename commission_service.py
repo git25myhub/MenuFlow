@@ -253,7 +253,7 @@ class CommissionService:
     
     @staticmethod
     def get_commission_config(restaurant_id):
-        """Get commission configuration for a restaurant"""
+        """Get commission configuration for a restaurant (creates default if none exists)"""
         config = CommissionConfig.query.filter_by(
             restaurant_id=restaurant_id,
             is_active=True
@@ -273,6 +273,14 @@ class CommissionService:
             db.session.commit()
         
         return config
+
+    @staticmethod
+    def get_commission_config_for_display(restaurant_id):
+        """Get commission configuration for display (returns None if not set, does not create)"""
+        return CommissionConfig.query.filter_by(
+            restaurant_id=restaurant_id,
+            is_active=True
+        ).first()
     
     @staticmethod
     def update_commission_config(restaurant_id, commission_type, commission_rate, 

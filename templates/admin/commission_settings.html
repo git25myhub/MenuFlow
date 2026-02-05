@@ -4,6 +4,16 @@
 
 {% block content %}
 <div class="container mt-4">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
     <div class="row">
         <div class="col-12">
             <h2 class="mb-4">
@@ -13,6 +23,12 @@
         </div>
     </div>
 
+    {% if not restaurants %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i>
+        No restaurants found. Register restaurants first to configure commission settings.
+    </div>
+    {% else %}
     <!-- Commission Configuration Form -->
     <div class="row">
         <div class="col-12">
@@ -24,7 +40,8 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    <form method="POST">
+                    <form method="POST" id="commission-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
@@ -54,9 +71,7 @@
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="commission_rate" name="commission_rate" 
                                                step="0.1" min="0" required>
-                                        <div class="input-group-append">
-                                            <span class="input-group-text" id="rate_unit">%</span>
-                                        </div>
+                                        <span class="input-group-text" id="rate_unit">%</span>
                                     </div>
                                     <small class="form-text text-muted">
                                         <span id="rate_help">Enter percentage (e.g., 5.0 for 5%)</span>
@@ -123,11 +138,11 @@
                                     <td>{{ restaurant.restaurant_name }}</td>
                                     <td>
                                         {% if config %}
-                                        <span class="badge badge-{{ 'primary' if config.commission_type == 'percentage' else 'secondary' }}">
+                                        <span class="badge bg-{{ 'primary' if config.commission_type == 'percentage' else 'secondary' }}">
                                             {{ config.commission_type.title() }}
                                         </span>
                                         {% else %}
-                                        <span class="badge badge-warning">Not Set</span>
+                                        <span class="badge bg-warning text-dark">Not Set</span>
                                         {% endif %}
                                     </td>
                                     <td>
@@ -158,12 +173,12 @@
                                     <td>
                                         {% if config %}
                                         {% if config.is_active %}
-                                        <span class="badge badge-success">Active</span>
+                                        <span class="badge bg-success">Active</span>
                                         {% else %}
-                                        <span class="badge badge-danger">Inactive</span>
+                                        <span class="badge bg-danger">Inactive</span>
                                         {% endif %}
                                         {% else %}
-                                        <span class="badge badge-warning">Default</span>
+                                        <span class="badge bg-warning text-dark">Default</span>
                                         {% endif %}
                                     </td>
                                     <td>
@@ -215,14 +230,20 @@
             </div>
         </div>
     </div>
+    {% endif %}
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const configsForJs = {{ configs_for_js | tojson | safe }};
     const commissionType = document.getElementById('commission_type');
     const commissionRate = document.getElementById('commission_rate');
+    const restaurantSelect = document.getElementById('restaurant_id');
+    if (!restaurantSelect) return;
     const rateUnit = document.getElementById('rate_unit');
     const rateHelp = document.getElementById('rate_help');
+    const minimumOrderAmount = document.getElementById('minimum_order_amount');
+    const maximumCommission = document.getElementById('maximum_commission');
     
     function updateRateDisplay() {
         if (commissionType.value === 'percentage') {
@@ -240,13 +261,21 @@ document.addEventListener('DOMContentLoaded', function() {
     updateRateDisplay();
     
     // Auto-fill form when restaurant is selected
-    const restaurantSelect = document.getElementById('restaurant_id');
     restaurantSelect.addEventListener('change', function() {
         const restaurantId = this.value;
-        if (restaurantId) {
-            // You could add AJAX here to fetch current config and auto-fill the form
-            // For now, just reset the form
-            document.querySelector('form').reset();
+        if (restaurantId && configsForJs[restaurantId]) {
+            const config = configsForJs[restaurantId];
+            commissionType.value = config.commission_type || 'percentage';
+            commissionRate.value = config.commission_rate != null ? config.commission_rate : '';
+            minimumOrderAmount.value = config.minimum_order_amount != null ? config.minimum_order_amount : '50';
+            maximumCommission.value = config.maximum_commission != null && config.maximum_commission > 0 ? config.maximum_commission : '';
+            updateRateDisplay();
+        } else if (restaurantId) {
+            // New config - use defaults
+            commissionType.value = 'percentage';
+            commissionRate.value = '';
+            minimumOrderAmount.value = '50';
+            maximumCommission.value = '500';
             updateRateDisplay();
         }
     });
